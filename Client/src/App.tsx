@@ -1,10 +1,11 @@
-import React from 'react'
 
+// import { Form } from "radix-ui"
+import Form from "@/page/Form"
 const App = () => {
   return (
-    <div>
-      
-    </div>
+    <>
+         <Form/>
+    </>
   )
 }
 
