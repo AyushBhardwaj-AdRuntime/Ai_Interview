@@ -17,25 +17,48 @@ import { BACKEND_URL } from "@/lib/config";
 const Form = () => {
   const [linkdin, setLinkdin] = useState("")
   const [github, setGithub] = useState("")
+  const [resume, setResume] = useState(null)
+  const [loading, setLoading] = useState(false);
   async function handleSubmit() {
-const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[A-Za-z0-9-]+\/?$/;
+    const formData = new FormData();
+    try {
+      setLoading(true)
 
-const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?$/;
+      const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[A-Za-z0-9-]+\/?$/;
 
-    if (!github || !linkdin) {
-      return toast("Provide both Linkdin & Github URLS")
+      const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?$/;
+
+      if (!resume && !github && !linkdin) {
+        return toast("Please provide at least one source (Resume, GitHub, or LinkedIn).");
+      }
+      if (github && !githubRegex.test(github)) {
+        return toast("GitHub link is not valid");
+      }
+
+      if (linkdin && !linkedinRegex.test(linkdin)) {
+        return toast("LinkedIn link is not valid");
+      }
+      if (resume) {
+        formData.append("resume", resume, resume.name);
+      }
+
+
+      formData.append("linkedin", linkdin);
+      formData.append("github", github);
+
+      await axios.post(`${BACKEND_URL}/api/v1/pre-interview`,
+        formData
+      )
+      toast.success("Uploaded successfully");
     }
-    if (!github.match(githubRegex )) {
-      return  toast("gitHub link is not valid")
+    catch (err) {
+
+      toast.error("Upload failed");
     }
-    if (!linkdin.match(linkedinRegex)) {
-      return  toast("linkdin link is not valid ")
+    finally {
+      setLoading(false)
     }
 
-    await axios.post(`${BACKEND_URL}/api/v1/pre-interview`, {
-      linkdin,
-      github
-    })
   }
 
   return (
@@ -61,9 +84,9 @@ const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\
           <h6 className="scroll-m-20 text-center text-3xl font-extrabold tracking-tight text-balance">
             Optional
           </h6>
-          <ResumeDropzone />
-          <Button className="w-full" onClick={handleSubmit}>
-            Start Interview
+          <ResumeDropzone setResume={setResume} resume={resume} />
+          <Button className="w-full" disabled={loading} onClick={handleSubmit}>
+            {loading ? "Uploading..." : "Start Interview"}
           </Button>
         </CardContent>
       </Card>
