@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import ResumeDropzone from "@/components/ui/ResumeDropzone";
 import { BACKEND_URL } from "@/lib/config";
+import { useNavigate } from "react-router-dom";
 
 
 const Form = () => {
@@ -19,6 +20,7 @@ const Form = () => {
   const [github, setGithub] = useState("")
   const [resume, setResume] = useState(null)
   const [loading, setLoading] = useState(false);
+   const navigation = useNavigate()
   async function handleSubmit() {
     const formData = new FormData();
     try {
@@ -43,13 +45,14 @@ const Form = () => {
       }
 
 
-      formData.append("linkedin", linkdin);
-      formData.append("github", github);
+      // formData.append("linkedin", linkdin);
+      // formData.append("github", github);
 
-      await axios.post(`${BACKEND_URL}/api/v1/pre-interview`,
+       const response =   await axios.post(`${BACKEND_URL}/api/v1/pre-interview`,
         formData
       )
       toast.success("Uploaded successfully");
+      navigation(`/interview/${response.data.id}`);
     }
     catch (err) {
 

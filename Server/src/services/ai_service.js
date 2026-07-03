@@ -39,7 +39,7 @@ Schema:
 
             {
                 role: "user",
-                content: resumeText
+                content: resumeText 
             }
 , 
         
