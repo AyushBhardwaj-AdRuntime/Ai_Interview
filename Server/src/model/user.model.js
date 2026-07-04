@@ -2,59 +2,120 @@ const mongoose = require("mongoose");
 
 const interviewSchema = new mongoose.Schema({
 
-    candidateProfile: {
+   candidateProfile: {
 
-        name: {
-            type: String,
-            required: true
-        },
-
-        email: String,
-
-        phone: String,
-
-        skills: [String],
-
-        projects: [
-            {
-                name: String,
-
-                techStack: [String],
-
-                description: String
-            }
-        ],
-
-        education: [
-            {
-                institution: String,
-
-                degree: String,
-
-                duration: String,
-
-                cgpa: String,
-
-                percentage: String,
-
-                location: String
-            }
-        ],
-
-        experience: [
-            {
-                designation: String,
-
-                company: String,
-
-                duration: String,
-
-                location: String,
-
-                description: String
-            }
-        ]
+    name: {
+        type: String,
+        required: true,
+        default: ""
     },
+
+    email: {
+        type: String,
+        default: ""
+    },
+
+    phone: {
+        type: String,
+        default: ""
+    },
+
+    skills: {
+        type: [String],
+        default: []
+    },
+
+    projects: {
+        type: [
+            {
+                name: {
+                    type: String,
+                    default: ""
+                },
+
+                techStack: {
+                    type: [String],
+                    default: []
+                },
+
+                description: {
+                    type: String,
+                    default: ""
+                }
+            }
+        ],
+        default: []
+    },
+
+    education: {
+        type: [
+            {
+                institution: {
+                    type: String,
+                    default: ""
+                },
+
+                degree: {
+                    type: String,
+                    default: ""
+                },
+
+                duration: {
+                    type: String,
+                    default: ""
+                },
+
+                cgpa: {
+                    type: String,
+                    default: ""
+                },
+
+                percentage: {
+                    type: String,
+                    default: ""
+                },
+
+                location: {
+                    type: String,
+                    default: ""
+                }
+            }
+        ],
+        default: []
+    },
+
+    experience: {
+        type: [
+            {
+                designation: {
+                    type: String,
+                    default: ""
+                },
+
+                company: {
+                    type: String,
+                    default: ""
+                },
+
+                duration: {
+                    type: String,
+                    default: ""
+                },
+
+                location: {
+                    type: String,
+                    default: ""
+                },
+
+                description: {
+                    type: String,
+                    default: ""
+                }
+            }
+        ],
+        default: []
+    }
+},
 
     interview: {
 

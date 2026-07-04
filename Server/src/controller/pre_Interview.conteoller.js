@@ -1,8 +1,10 @@
 const extractResumeText = require("../services/resume")
 const extractGitHubRepo = require("../services/github")
 const parseResume = require("../services/ai_service")
+const normalizeCandidateProfile = require("../services/profile.service")
 const axios = require("axios")
  const interviewModel = require("../model/user.model")
+
 async function preInterview(req, res) {
 
     try {
@@ -13,8 +15,13 @@ async function preInterview(req, res) {
 
         const profile = await parseResume(resumeText);
         
+          
+
+         const candidateProfile = normalizeCandidateProfile(profile);
+
+          console.log(candidateProfile)
          const interview = await interviewModel.create({
-              candidateProfile :  profile
+              candidateProfile 
          });
         return res.json({
 
@@ -36,4 +43,4 @@ async function preInterview(req, res) {
 
 }
 
-module.exports = preInterview;
+module.exports = preInterview ;
