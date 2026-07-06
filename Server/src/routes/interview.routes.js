@@ -12,6 +12,6 @@ router.post(
     upload.single("resume"),
     preInterview
 );
- router.get("/interview" ,getInterview )
+ router.get("/interview/:id" ,getInterview )
 
 module.exports = router;
