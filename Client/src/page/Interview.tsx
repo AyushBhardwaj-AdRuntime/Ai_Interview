@@ -6,24 +6,15 @@ import { BACKEND_URL } from "@/lib/config";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-import MediaHandler from "@/Services/MediaHandler"
-import {GeminiLive}  from "@/Services/GeminiLive"
- 
+import MediaHandler from "@/Services/mediaHandler";
+
 
 const Interview = () => {
   const { id } = useParams();
- const interviewState = useRef({
-   currentQuestion : "",
-    currentAnswer : "",
-      questions : [],
 
- })
   const [interview, setInterview] = useState(null);
-  const [transcript, setTranscript] = useState("");
-    
   const mediaRef = useRef(new MediaHandler());
-  const geminiRef = useRef(new GeminiLive());
-
+  const socketRef = useRef()
   useEffect(() => {
     async function fetchInterview() {
       try {
@@ -38,121 +29,99 @@ const Interview = () => {
     }
 
     fetchInterview();
-
-    geminiRef.current.onOpen = () => {
-      console.log(" Gemini Connected");
-    };
-
-    geminiRef.current.onClose = () => {
-      console.log(" Gemini Disconnected");
-    };
-
-    geminiRef.current.onMessage = (message) => {
-      console.log(message);
-       const content = message.serverContent
-        console.log(content)
-  
-
-   
-        if (content?.inputTranscription) {
-               console.log("User:", content.inputTranscription.text);
-            interviewState.current.currentAnswer +=  " "  + content.inputTranscription.text
-          
-}
-      
-      if (content.outputTranscription?.text) {
-         console.log( JSON.stringify(content.outputTranscription))
-      interviewState.current.currentQuestion = content.outputTranscription.text
-        }
-
-      // Audio from Gemini
-        const part =
-        content.modelTurn?.parts?.[0];
-
-       if (part?.inlineData) {
-        const base64 = part.inlineData.data;
-
-        const binary = atob(base64);
-
-        const bytes = new Uint8Array(binary.length);
-
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-console.log("Playing audio");
-        mediaRef.current.playAudio(bytes.buffer);
-      }
-    };
-
-    return ()=>{
+    return () => {
       mediaRef.current.stopAudio();
-       mediaRef.current.stopAudioPlayback(); 
-       geminiRef.current.disconnect();
+      mediaRef.current.stopAudioPlayback();
+
     };
   }, [id]);
-    
-  function arrayBufferToBase64(buffer) {
-    const bytes = new Uint8Array(buffer);
 
-    let binary = "";
 
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
+     function connectSocket() {
+    return new Promise((resolve, reject) => {
 
-    return btoa(binary);
-  }
+        socketRef.current = new WebSocket("ws://localhost:8080");
 
-  const startInterview = async () => {
-    try {
+        receiveAudioData();
 
-      // Connect to Gemini
-      await geminiRef.current.connect();
-   geminiRef.current.sendText(`
-You are an experienced interviewer  a HR of a Company.
+        socketRef.current.onopen = () => {
+            console.log("Connected");
+            resolve();
+        };
 
-Candidate Summary:
-${interview?.candidateProfile?.interviewSummary}
-// Candidate Profile: 
-// ${JSON.stringify(interview?.candidateProfile, null, 2)}
-Conduct a professional interview.
+        socketRef.current.onclose = () => {
+            console.log("Socket Closed");
+        };
 
-Rules:
-- voice will be of male
-- Introduce yourself.
-- Explain the interview format.
-- Ask exactly 6 questions.
-- Ask only one question at a time.
-- Ask follow-up questions when necessary.
-- Focus on the candidate's skills, experience and projects.
-- Do not reveal answers.
-- End the interview after the sixth question.
-`);
-      console.log("Gemini Session Started");
+        socketRef.current.onerror = (err) => {
+            reject(err);
+        };
+    });
+}
+                function arrayBufferToBase64(buffer) {
+              const bytes = new Uint8Array(buffer);
 
-      
-      await mediaRef.current.startAudio((pcmBuffer) => {
+              let binary = "";
 
-        const base64 = arrayBufferToBase64(pcmBuffer);
+              for (let i = 0; i < bytes.length; i++) {
+                binary += String.fromCharCode(bytes[i]);
+              }
 
-        geminiRef.current.sendAudio(base64);
+              return btoa(binary);
+            }
+              async  function sendAudioData() {
+                await mediaRef.current.startAudio((pcmBuffer) => {
+              
+                  const base64 = arrayBufferToBase64(pcmBuffer);
+                    
+                socketRef.current.send(JSON.stringify({
+                  type: "audio",
+                  data: base64
+                }))
+              })}
+             function receiveAudioData() {
+                socketRef.current.onmessage = (event) => {
+                const message = JSON.parse(event.data)
+                const content = message.serverContent;
+                    const part =
+                    content.modelTurn?.parts?.[0];
 
-      });
+                  if (part?.inlineData) {
+                    const base64 = part.inlineData.data;
 
-      console.log("Microphone Streaming...");
+                    const binary = atob(base64);
 
-    } catch (err) {
+                    const bytes = new Uint8Array(binary.length);
+
+                    for (let i = 0; i < binary.length; i++) {
+                      bytes[i] = binary.charCodeAt(i);
+                    }
+                    console.log("Playing audio");
+                    mediaRef.current.playAudio(bytes.buffer);
+                  }
+                }
+              }
+
+
+    const startInterview = async () => {
+      try {
+        
+       await  connectSocket()
+       await sendAudioData()
+
+ } catch (err) {  
       console.error(err);
     }
   };
-  const   stopInterview = async () => {
+  const stopInterview = async () => {
     try {
       // Stop microphone
       mediaRef.current.stopAudio();
       mediaRef.current.stopAudioPlayback();
-      geminiRef.current.disconnect();
+socketRef.current?.close();
+socketRef.current = null;
     }
-      catch (err) {
+    catch (err) {
       console.error(err);
     }
   }
@@ -164,94 +133,98 @@ Rules:
       </div>
     );
   }
-    return (
-       <>
-       <div className="min-h-screen bg-zinc-950 p-8">
-      <div className="mx-auto max-w-7xl">
+  return (
+    <>
+      <div className="min-h-screen bg-zinc-950 p-8">
+        <div className="mx-auto max-w-7xl">
 
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+          {/* Header */}
+          <div className="mb-8 flex items-center justify-between">
 
-          <div>
-            <h1 className="text-3xl font-bold text-white">
-              {interview?.candidateProfile?.name}
-              
-            </h1>
+            <div>
+              <h1 className="text-3xl font-bold text-white">
+                {interview?.candidateProfile?.name}
 
-            <p className="mt-2 text-zinc-400">
-              {interview?.candidateProfile?.email}
-            </p>
-          </div>
-   <div className="">
-<Button 
-            onClick={startInterview}
-            variant="destructive"
-          >
-            Start Interview
-          </Button>
-   </div>
-          
-           
-          <Button
-            onClick={stopInterview}
-            
-          >   
-            Stop Interview
-          </Button>
-           
- 
-        </div>
+              </h1>
 
-        {/* Main Layout */}
-        <div className="grid grid-cols-12 gap-8">
-
-          {/* Candidate */}
-          <Card className="col-span-5 h-[550px] bg-zinc-900 border-zinc-800 p-6">
-
-            <h2 className="mb-4 text-xl font-semibold text-white">
-              {interview?.candidateProfile?.name}
-            </h2>
-
-            <div className="flex h-[420px] items-center justify-center rounded-lg border border-zinc-700">
-
-             
-
-            </div>
-
-          </Card>
-
-          {/* AI Interviewer */}
-          <Card className="col-span-7 h-[550px] bg-zinc-900 border-zinc-800 p-6">
-
-            <h2 className="mb-4 text-xl font-semibold text-white">
-              HR
-            </h2>
-
-            <div className="mb-5 h-[320px] overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-950 p-4">
-
-              <p className="whitespace-pre-wrap text-zinc-200">
-
-                {transcript }
-
+              <p className="mt-2 text-zinc-400">
+                {interview?.candidateProfile?.email}
               </p>
-
             </div>
- 
-  <div> 
-      
-       {transcript}
-  </div>
-          
+            <div className="">
+              <Button
+                onClick={startInterview}
+                variant="destructive"
+              >
+                Start Interview
+              </Button>
+            </div>
 
-          </Card>
+
+            <Button
+              onClick={stopInterview}
+
+            >
+              Stop Interview
+            </Button>
+
+
+          </div>
+
+          {/* Main Layout */}
+          <div className="grid grid-cols-12 gap-8">
+
+            {/* Candidate */}
+            <Card className="col-span-5 h-[550px] bg-zinc-900 border-zinc-800 p-6">
+
+              <h2 className="mb-4 text-xl font-semibold text-white">
+                {interview?.candidateProfile?.name}
+              </h2>
+
+              <div className="flex h-[420px] items-center justify-center rounded-lg border border-zinc-700">
+
+
+
+              </div>
+
+            </Card>
+
+            {/* AI Interviewer */}
+            <Card className="col-span-7 h-[550px] bg-zinc-900 border-zinc-800 p-6">
+
+              <h2 className="mb-4 text-xl font-semibold text-white">
+                HR
+              </h2>
+
+              <div className="mb-5 h-[320px] overflow-y-auto rounded-lg border border-zinc-700 bg-zinc-950 p-4">
+
+                <p className="whitespace-pre-wrap text-zinc-200">
+
+
+
+                </p>
+
+              </div>
+
+              <div>
+
+
+              </div>
+
+
+            </Card>
+
+          </div>
 
         </div>
-
       </div>
-    </div>
- </>
-     );
+    </>
+  );
 };
 
 
 export default Interview
+
+// Assuming 'chunk' is a Buffer of raw PCM audio
+
+
