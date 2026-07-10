@@ -7,7 +7,6 @@ export class GeminiLive {
     });
 
     this.session = null;
-
     this.onMessage = null;
     this.onOpen = null;
     this.onClose = null;
@@ -19,6 +18,19 @@ export class GeminiLive {
 
       config: {
         responseModalities: [Modality.AUDIO],
+         systemInstruction: {
+      parts: [
+        {
+          text: `
+You are a professional AI interviewer.
+Ask one question at a time.
+Speak naturally.
+Never answer your own questions.
+Wait for the candidate after every question.
+          `
+        }
+      ]
+    }
       },
 
       callbacks: {

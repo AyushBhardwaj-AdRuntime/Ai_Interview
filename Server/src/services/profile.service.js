@@ -1,30 +1,45 @@
-
-
-
 function normalizeCandidateProfile(profile) {
     return {
-        name: typeof profile.name === "string" ? profile.name : "",
+        interviewSummary:
+            typeof profile.interviewSummary === "string"
+                ? profile.interviewSummary
+                : "",
 
-        email: typeof profile.email === "string" ? profile.email : "",
+        name:
+            typeof profile.name === "string"
+                ? profile.name
+                : "",
 
-        phone: typeof profile.phone === "string" ? profile.phone : "",
+        email:
+            typeof profile.email === "string"
+                ? profile.email
+                : "",
 
-        skills: Array.isArray(profile.skills)
-            ? profile.skills
-            : [],
+        phone:
+            typeof profile.phone === "string"
+                ? profile.phone
+                : "",
 
-        projects: Array.isArray(profile.projects)
-            ? profile.projects
-            : [],
+        skills:
+            Array.isArray(profile.skills)
+                ? profile.skills
+                : [],
 
-        education: Array.isArray(profile.education)
-            ? profile.education
-            : [],
+        projects:
+            Array.isArray(profile.projects)
+                ? profile.projects
+                : [],
 
-        experience: Array.isArray(profile.experience)
-            ? profile.experience
-            : []
+        education:
+            Array.isArray(profile.education)
+                ? profile.education
+                : [],
+
+        experience:
+            Array.isArray(profile.experience)
+                ? profile.experience
+                : []
     };
 }
 
-module.exports = normalizeCandidateProfile
+module.exports = normalizeCandidateProfile;

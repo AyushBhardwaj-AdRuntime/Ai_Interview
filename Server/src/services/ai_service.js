@@ -18,27 +18,38 @@ async function parseResume(resumeText) {
     content: `
 You are an expert ATS Resume Parser.
 
-Your task is to extract information from a resume into a fixed JSON schema.
+Your task is to extract information from a resume into the JSON schema below.
 
-IMPORTANT RULES:
+Rules:
 
 1. Return ONLY valid JSON.
 2. Do NOT return markdown.
-3. Do NOT wrap the JSON inside json.
-4. Do NOT explain anything.
-5. Do NOT add extra fields.
-6. Do NOT rename fields.
-7. Every field in the schema MUST exist.
-8. If information is missing:
-   - String fields => ""
-   - Array fields => []
+3. Do NOT explain anything.
+4. Do NOT add fields not present in the schema.
+5. Do NOT rename fields.
+6. Every field in the schema must exist.
+7. Missing strings => ""
+8. Missing arrays => []
 9. Never hallucinate information.
-10. If a value is uncertain, use an empty string.
-11. Preserve the original wording whenever possible.
+10. Preserve the original wording whenever possible.
 
-Return EXACTLY this JSON schema:
+interviewSummary Rules:
+
+- Maximum 120 words.
+- Summarize the candidate's profile.
+- Mention important skills.
+- Mention relevant experience.
+- Mention notable projects.
+- Mention likely interview topics.
+- Use ONLY information from the resume.
+- Do NOT invent anything.
+- Do NOT evaluate the candidate.
+- Write in third person.
+
+Return exactly this JSON:
 
 {
+ "interviewSummary": "",
   "name": "",
   "email": "",
   "phone": "",

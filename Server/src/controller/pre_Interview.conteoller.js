@@ -22,6 +22,7 @@ async function preInterview(req, res) {
           console.log(candidateProfile)
          const interview = await interviewModel.create({
               candidateProfile 
+               
          });
         return res.json({
 

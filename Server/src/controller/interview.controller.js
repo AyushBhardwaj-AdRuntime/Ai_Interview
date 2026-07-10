@@ -5,8 +5,14 @@ async function getInterview(req, res) {
 
         const { id } = req.params;
 
-        const interview = await interviewModel.findById(id);
-
+        const interview = await interviewModel.findByIdAndUpdate(
+             id , 
+              {
+    "interview.status": "running",
+  },
+        );
+        
+         
         if (!interview) {
             return res.status(404).json({
                 message: "Interview not found"
@@ -20,7 +26,9 @@ async function getInterview(req, res) {
         console.error(err);
 
         return res.status(500).json({
-            message: "Internal Server Error"
+            message: "Internal Server Error" ,
+            id ,
+            status
         });
 
     }

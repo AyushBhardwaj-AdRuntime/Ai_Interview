@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const interviewSchema = new mongoose.Schema({
 
    candidateProfile: {
-
+   interviewSummary: String ,
     name: {
         type: String,
         required: true,
@@ -116,7 +116,7 @@ const interviewSchema = new mongoose.Schema({
         default: []
     }
 },
-
+     
     interview: {
 
         status: {
@@ -153,7 +153,7 @@ const interviewSchema = new mongoose.Schema({
             default: 0
         },
 
-        summary: String
+   
 
     }
 
