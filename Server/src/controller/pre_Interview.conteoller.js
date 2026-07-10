@@ -26,7 +26,7 @@ async function preInterview(req, res) {
          });
         return res.json({
 
-            profile,
+            interview,
           id :   interview._id
             // githubRepo
 

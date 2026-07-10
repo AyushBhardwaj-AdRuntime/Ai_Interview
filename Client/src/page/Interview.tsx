@@ -14,7 +14,7 @@ const Interview = () => {
 
   const [interview, setInterview] = useState(null);
   const mediaRef = useRef(new MediaHandler());
-  const socketRef = useRef()
+  const socketRef = useRef(null)
   useEffect(() => {
     async function fetchInterview() {
       try {
@@ -81,10 +81,12 @@ const Interview = () => {
               })}
              function receiveAudioData() {
                 socketRef.current.onmessage = (event) => {
+                  console.log(event.data)
                 const message = JSON.parse(event.data)
+                console.log(message)
                 const content = message.serverContent;
                     const part =
-                    content.modelTurn?.parts?.[0];
+                    content?.modelTurn?.parts?.[0];
 
                   if (part?.inlineData) {
                     const base64 = part.inlineData.data;

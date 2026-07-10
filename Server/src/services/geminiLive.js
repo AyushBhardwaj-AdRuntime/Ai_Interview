@@ -1,9 +1,9 @@
-import { GoogleGenAI, Modality } from "@google/genai";
+const  { GoogleGenAI, Modality } =  require("@google/genai")
 
-export class GeminiLive {
+ class GeminiLive {
   constructor() {
     this.ai = new GoogleGenAI({
-      apiKey: import.meta.env.VITE_GEMINI_API_KEY,
+      apiKey: process.env.GEMINI_API_KEY,
     });
 
     this.session = null;
@@ -82,3 +82,4 @@ Wait for the candidate after every question.
     this.session?.close();
   }
 }
+module.exports = { GeminiLive };

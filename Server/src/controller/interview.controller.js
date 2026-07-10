@@ -1,8 +1,13 @@
 const interviewModel = require("../model/user.model");
+  const WebSocket = require("ws")
+           
+          
+          
 
 async function getInterview(req, res) {
     try {
-
+                    
+                  
         const { id } = req.params;
 
         const interview = await interviewModel.findByIdAndUpdate(
