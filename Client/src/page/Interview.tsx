@@ -40,7 +40,7 @@ const Interview = () => {
      function connectSocket() {
     return new Promise((resolve, reject) => {
 
-        socketRef.current = new WebSocket("ws://localhost:8080");
+        socketRef.current = new WebSocket(`ws://localhost:8080?id=${id}`);
 
         receiveAudioData();
 

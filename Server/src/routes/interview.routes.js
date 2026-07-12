@@ -15,5 +15,5 @@ router.post(
 );
  router.get("/interview/:id" ,getInterview )
   router.get("/result/:id" , getResult)
-
+ 
 module.exports = router;
