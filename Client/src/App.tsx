@@ -12,7 +12,7 @@ const App = () => {
         <Routes>
            <Route        path = "/"  element = {<Form/>}           />
        <Route path="/interview/:id" element={<Interview />} />          
-           <Route        path = "/result"  element = {<Result/>}           />
+           <Route        path = "/result/:id"  element = {<Result/>}           />
                      
         </Routes>
                     <Toaster position="top-right" />
