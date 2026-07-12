@@ -58,7 +58,7 @@ Return exactly this JSON:
     {
       "name": "",
       "techStack": [],
-      "description": ""
+      "description": []
     }
   ],
   "education": [

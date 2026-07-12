@@ -40,7 +40,7 @@ Wait for the candidate after every question.
         },
 
         onmessage: (message) => {
-          console.log(message);
+          // console.log(message);
 
           this.onMessage?.(message);
         },

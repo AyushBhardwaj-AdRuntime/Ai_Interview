@@ -1,15 +1,19 @@
 
-
+const  {InterviewState  , PHASE} = require("../websocket/interviewState")
 const interviewModel = require("../model/user.model");
 const {GeminiLive} = require("../services/geminiLive")
-
+ 
  function setupInterviewSocket (wss){
-
+const PHASE = {
+    ASKING: "ASKING",
+    WAITING_FOR_ANSWER: "WAITING_FOR_ANSWER",
+    ANSWERING: "ANSWERING",
+};
  wss.on("connection", async (client , req) => {
  const url= new URL(req.url , "http://localhost")
  const id = url.searchParams.get("id")
- console.log(id)
- console.log("Frontend Connected");
+//  console.log(id)
+//  console.log("Frontend Connected");
 const  interview = await interviewModel.findById(
     id ,
      "candidateProfile.interviewSummary"
@@ -19,24 +23,48 @@ const  interview = await interviewModel.findById(
 
     await gemini.connect();
 
-    console.log("Connected to Gemini");
-
-    gemini.onMessage = (message) => {
+    // console.log("Connected to Gemini");
+const state = new InterviewState (id);
+    gemini.onMessage = async (message) => {
 
      //    console.log(message);
 
         const content = message.serverContent;
 
         if (!content) return;
+     
+      if (
+        state.phase === PHASE.ANSWERING &&
+        content.outputTranscription?.text
+    ) {
+        // Previous answer is complete
+        await state.saveQuestionAnswer();
 
-        if (content.inputTranscription?.text) {
-            console.log("User:", content.inputTranscription.text);
-        }
+        state.currentQuestion = "";
+        state.currentAnswer = "";
 
-        if (content.outputTranscription?.text) {
-            console.log("Gemini:", content.outputTranscription.text);
-        }
+        state.phase = PHASE.ASKING;
+    }
 
+    if (content.outputTranscription?.text) {
+        state.addQuestion(content.outputTranscription.text);
+
+        console.log("Gemini:", content.outputTranscription.text);
+    }
+
+
+    if (content.turnComplete) {
+        state.phase = PHASE.WAITING_FOR_ANSWER;
+    }
+
+    if (content.inputTranscription?.text) {
+
+        state.phase = PHASE.ANSWERING;
+
+        state.addAnswer(content.inputTranscription.text);
+
+        console.log("User:", content.inputTranscription.text);
+    }
         client.send(JSON.stringify(message));
     };
 
@@ -52,6 +80,13 @@ const  interview = await interviewModel.findById(
 
     });
 
+    client.on("close", () => {
+
+    gemini.disconnect();
+
+    // console.log("Frontend disconnected");
+
+});
   gemini.sendText(`
 You are an experienced HR interviewer conducting a real mock interview.
 
