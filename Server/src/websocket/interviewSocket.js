@@ -23,7 +23,7 @@ const  interview = await interviewModel.findById(
 
     await gemini.connect();
 
-    // console.log("Connected to Gemini");
+    console.log("Connected to Gemini");
 const state = new InterviewState (id);
     gemini.onMessage = async (message) => {
 
