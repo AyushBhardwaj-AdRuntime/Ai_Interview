@@ -10,12 +10,12 @@ async function parseResume(resumeText) {
 
     const response = await groq.chat.completions.create({
 
-        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        model: "openai/gpt-oss-120b" ,
 
        messages: [
   {
     role: "system",
-    content: `
+    content: `      
 You are an expert ATS Resume Parser.
 
 Your task is to extract information from a resume into the JSON schema below.

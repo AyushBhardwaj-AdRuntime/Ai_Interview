@@ -17,7 +17,7 @@ import { useNavigate } from "react-router-dom";
 const Form = () => {
   const [linkdin, setLinkdin] = useState("");
   const [github, setGithub] = useState("");
-  const [resume, setResume] = useState(null);
+  const [resume, setResume] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigate();
 
@@ -29,27 +29,33 @@ const Form = () => {
       const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[A-Za-z0-9-]+\/?$/;
       const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?$/;
 
-      if (!resume && !github && !linkdin) {
-        return toast("Please provide at least one source (Resume, GitHub, or LinkedIn).");
+      if (!resume) {
+        toast.error("Please upload a resume to continue.");
+        return;
       }
       if (github && !githubRegex.test(github)) {
-        return toast("GitHub link is not valid");
+        toast.error("GitHub link is not valid");
+        return;
       }
       if (linkdin && !linkedinRegex.test(linkdin)) {
-        return toast("LinkedIn link is not valid");
+        toast.error("LinkedIn link is not valid");
+        return;
       }
       if (resume) {
         formData.append("resume", resume, resume.name);
       }
 
-      // formData.append("linkedin", linkdin);
-      // formData.append("github", github);
+      formData.append("linkedin", linkdin);
+      formData.append("github", github);
 
       const response = await axios.post(`${BACKEND_URL}/api/v1/pre-interview`, formData);
       toast.success("Profile submitted successfully");
       navigation(`/interview/${response.data.id}`);
     } catch (err) {
-      toast.error("Submission failed. Please try again.");
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || "Submission failed. Please try again."
+        : "Submission failed. Please try again.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

@@ -9,6 +9,12 @@ async function preInterview(req, res) {
 
     try {
 
+        if (!req.file) {
+            return res.status(400).json({
+                message: "Resume file is required."
+            });
+        }
+
         const resumeText = await extractResumeText(req.file);
 
         // const githubRepo = await extractGitHubRepo(req.body.github);
