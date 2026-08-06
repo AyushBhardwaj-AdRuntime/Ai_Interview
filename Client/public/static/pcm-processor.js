@@ -1,6 +1,10 @@
 class PCMProcessor extends AudioWorkletProcessor {
   constructor() {
-    super();
+    
+     super();
+
+
+
     this.bufferSize = 4096;
     this.buffer = new Float32Array(this.bufferSize);
     this.bufferIndex = 0;
@@ -18,6 +22,7 @@ class PCMProcessor extends AudioWorkletProcessor {
       if (this.bufferIndex >= this.bufferSize) {
         this.port.postMessage(this.buffer);
         this.bufferIndex = 0;
+
       }
     }
 

@@ -14,9 +14,10 @@ const Interview = () => {
   const navigate = useNavigate();
 
   const [interview, setInterview] = useState(null);
+  const [error, setError] = useState(null);
   const mediaRef = useRef(new MediaHandler());
   const socketRef = useRef(null)
-  
+
   useEffect(() => {
     async function fetchInterview() {
       try {
@@ -27,6 +28,7 @@ const Interview = () => {
         setInterview(response.data);
       } catch (err) {
         console.error(err);
+        setError("Failed to load interview. Please try again or check the URL.");
       }
     }
 
@@ -39,23 +41,23 @@ const Interview = () => {
 
 
   function connectSocket() {
-    return new Promise((resolve, reject) => {
-        socketRef.current = new WebSocket(`ws://localhost:8080?id=${id}`);
+    return new Promise<void>((resolve, reject) => {
+      socketRef.current = new WebSocket(`ws://localhost:8080?id=${id}`);
 
-        receiveAudioData();
+      receiveAudioData();
 
-        socketRef.current.onopen = () => {
-            console.log("Connected");
-            resolve();
-        };
+      socketRef.current.onopen = () => {
 
-        socketRef.current.onclose = () => {
-            console.log("Socket Closed");
-        };
+        resolve();
+      };
 
-        socketRef.current.onerror = (err) => {
-            reject(err);
-        };
+      socketRef.current.onclose = () => {
+
+      };
+
+      socketRef.current.onerror = (err) => {
+        reject(err);
+      };
     });
   }
 
@@ -70,32 +72,34 @@ const Interview = () => {
 
   async function sendAudioData() {
     await mediaRef.current.startAudio((pcmBuffer) => {
-      const base64 = arrayBufferToBase64(pcmBuffer);
-      socketRef.current.send(JSON.stringify({
-        type: "audio",
-        data: base64
-      }))
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        const base64 = arrayBufferToBase64(pcmBuffer);
+        socketRef.current.send(JSON.stringify({
+          type: "audio",
+          data: base64
+        }))
+      }
     });
   }
 
   function receiveAudioData() {
     socketRef.current.onmessage = (event) => {
-      console.log(event.data)
       const message = JSON.parse(event.data)
-      console.log(message)
       const content = message.serverContent;
-      const part = content?.modelTurn?.parts?.[0];
+      const parts = content?.modelTurn?.parts || [];
 
-      if (part?.inlineData) {
-        const base64 = part.inlineData.data;
-        const binary = atob(base64);
-        const bytes = new Uint8Array(binary.length);
+      for (const part of parts) {
+        if (part?.inlineData) {
+          const base64 = part.inlineData.data;
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
 
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+
+          mediaRef.current.playAudio(bytes.buffer);
         }
-        console.log("Playing audio");
-        mediaRef.current.playAudio(bytes.buffer);
       }
     }
   }
@@ -105,7 +109,7 @@ const Interview = () => {
     try {
       await connectSocket()
       await sendAudioData()
-    } catch (err) {  
+    } catch (err) {
       console.error(err);
     }
   };
@@ -126,6 +130,14 @@ const Interview = () => {
     stopInterview();
     navigate(`/result/${id}`);
   };
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <p className="text-red-500 font-medium">{error}</p>
+      </div>
+    );
+  }
 
   if (!interview) {
     return (
@@ -193,7 +205,7 @@ const Interview = () => {
             <div className="flex-1 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-6 flex items-center justify-center">
               <div className="text-center">
                 <div className="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" /></svg>
                 </div>
                 <p className="text-slate-500 font-medium">Voice channel open</p>
                 <p className="text-slate-400 text-sm mt-1">Interviewer will speak automatically</p>

@@ -32,8 +32,7 @@ async function getInterview(req, res) {
 
         return res.status(500).json({
             message: "Internal Server Error" ,
-            id ,
-            status
+            id
         });
 
     }

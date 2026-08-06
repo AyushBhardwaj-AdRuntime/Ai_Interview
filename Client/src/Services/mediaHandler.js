@@ -26,6 +26,7 @@ class MediaHandler {
     if (this.audioContext.state === "suspended") {
       await this.audioContext.resume();
     }
+
   }
 
   async startAudio(onAudioData) {
@@ -44,6 +45,29 @@ class MediaHandler {
       );
 
       this.audioWorkletNode.port.onmessage = (event) => {
+
+
+        const downsampled = this.downsampleBuffer(
+          event.data,
+          this.audioContext.sampleRate,
+          16000
+        );
+
+
+
+        const pcm16 = this.convertFloat32ToInt16(downsampled);
+
+
+
+        const samples = new Int16Array(pcm16);
+
+        let max = 0;
+
+        for (const s of samples) {
+          max = Math.max(max, Math.abs(s));
+        }
+
+
         if (this.isRecording) {
           const downsampled = this.downsampleBuffer(
             event.data,
@@ -51,6 +75,15 @@ class MediaHandler {
             16000
           );
           const pcm16 = this.convertFloat32ToInt16(downsampled);
+          const samples = new Int16Array(pcm16);
+
+          let max = 0;
+
+          for (const s of samples) {
+            max = Math.max(max, Math.abs(s));
+          }
+
+
           onAudioData(pcm16);
         }
       };
@@ -177,7 +210,7 @@ class MediaHandler {
     this.scheduledSources.forEach((s) => {
       try {
         s.stop();
-      } catch (e) {}
+      } catch (e) { }
     });
     this.scheduledSources = [];
     if (this.audioContext) {
@@ -221,4 +254,4 @@ class MediaHandler {
     return buf.buffer;
   }
 }
-export default MediaHandler  ;
+export default MediaHandler;
