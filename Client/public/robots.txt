@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /interview/
+Disallow: /result/
+
+Sitemap: https://mockhire.me/sitemap.xml
