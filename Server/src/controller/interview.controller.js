@@ -1,4 +1,4 @@
-const interviewModel = require("../model/user.model");
+const interviewModel = require("../model/interview.model");
   const WebSocket = require("ws")
            
           

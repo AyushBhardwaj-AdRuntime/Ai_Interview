@@ -2,8 +2,9 @@ const extractResumeText = require("../services/resume")
 const extractGitHubRepo = require("../services/github")
 const parseResume = require("../services/ai_service")
 const normalizeCandidateProfile = require("../services/profile.service")
+const  resumeModel = require("../model/resume.model")
 const axios = require("axios")
- const interviewModel = require("../model/user.model")
+ const interviewModel = require("../model/interview.model")
 
 async function preInterview(req, res) {
 
@@ -26,8 +27,15 @@ async function preInterview(req, res) {
          const candidateProfile = normalizeCandidateProfile(profile);
 
           console.log(candidateProfile)
+           const resume = await resumeModel.create({
+             userId: req.userId,
+             candidateProfile ,
+             originalFile: {
+                name : req.file.originalname
+             }
+           })
          const interview = await interviewModel.create({
-              candidateProfile 
+resumeId: resume._id
                
          });
         return res.json({

@@ -1,6 +1,6 @@
 
 const { InterviewState, PHASE } = require("../websocket/interviewState")
-const interviewModel = require("../model/user.model");
+const interviewModel = require("../model/interview.model");
 const { GeminiLive } = require("../services/geminiLive")
 
 function setupInterviewSocket(wss) {

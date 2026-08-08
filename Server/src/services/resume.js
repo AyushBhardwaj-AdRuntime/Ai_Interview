@@ -3,7 +3,7 @@ const pdf = require("pdf-parse");
 const path = require("path");
 const mammoth = require("mammoth");
 
-async function extractResumeText(file) {
+async function  extractResumeText(file) {
 
     if (!file || !file.originalname || !file.path) {
         throw new Error("Resume file is required.");

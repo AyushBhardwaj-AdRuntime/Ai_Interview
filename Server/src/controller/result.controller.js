@@ -1,7 +1,7 @@
   
  
 const  Result = require("../services/result.service")
-    const interviewModel  = require("../model/user.model")
+    const interviewModel  = require("../model/interview.model")
     
     async  function getResult (req , res){ 
          const id = req.params.id
