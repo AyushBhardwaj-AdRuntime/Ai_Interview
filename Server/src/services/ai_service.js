@@ -7,49 +7,35 @@ const groq = new Groq({
 });
 
 async function parseResume(resumeText) {
-
+  try {
+    console.log("parseResume request starting");
     const response = await groq.chat.completions.create({
-
-        model: "openai/gpt-oss-120b" ,
-
-       messages: [
-  {
-    role: "system",
-    content: `      
-You are an expert ATS Resume Parser.
+      model: "openai/gpt-oss-120b",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert ATS Resume Parser.
 
 Your task is to extract information from a resume into the JSON schema below.
 
 Rules:
-
-1. Return ONLY valid JSON.
-2. Do NOT return markdown.
-3. Do NOT explain anything.
-4. Do NOT add fields not present in the schema.
-5. Do NOT rename fields.
-6. Every field in the schema must exist.
-7. Missing strings => ""
-8. Missing arrays => []
-9. Never hallucinate information.
-10. Preserve the original wording whenever possible.
+1. Return ONLY valid JSON. No markdown, no explanation.
+2. Every field in the schema must exist.
+3. Missing strings => ""
+4. Missing arrays => []
+5. Never hallucinate. Preserve original wording.
 
 interviewSummary Rules:
-
 - Maximum 120 words.
-- Summarize the candidate's profile.
-- Mention important skills.
-- Mention relevant experience.
-- Mention notable projects.
+- Summarize the candidate's profile in third person.
+- Mention important skills, experience, and notable projects.
 - Mention likely interview topics.
 - Use ONLY information from the resume.
-- Do NOT invent anything.
-- Do NOT evaluate the candidate.
-- Write in third person.
 
-Return exactly this JSON:
+Return exactly this JSON (no other text):
 
 {
- "interviewSummary": "",
+  "interviewSummary": "",
   "name": "",
   "email": "",
   "phone": "",
@@ -77,29 +63,37 @@ Return exactly this JSON:
       "company": "",
       "duration": "",
       "location": "",
-      "description": ""
+      "description": []
     }
   ]
-}  
-`
-  },
-  {
-    role: "user",
-    content: resumeText
-  }
-]
-
-        
-
+}`
+        },
+        {
+          role: "user",
+          content: resumeText
+        }
+      ]
     });
 
-    const content = response.choices[0].message.content
-  .replace(/```json/g, "")
-  .replace(/```/g, "")
-  .trim();
+    const content = response?.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error("GPT 120B returned no content");
+    }
 
-return JSON.parse(content);
+    // ✅ Fix: strip markdown fences and any leading/trailing whitespace
+    const cleaned = content
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/```\s*$/i, "")
+      .trim();
 
+    console.log("parseResume response (first 300 chars):", cleaned.slice(0, 300));
+
+    return JSON.parse(cleaned);
+  } catch (error) {
+    console.error("parseResume error:", error);
+    throw error;
+  }
 }
 
-module.exports = parseResume;
+module.exports = parseResume;

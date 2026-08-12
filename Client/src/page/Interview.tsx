@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-import { BACKEND_URL } from "@/lib/config";
+import { BACKEND_URL, WS_URL } from "@/lib/config";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -42,7 +42,7 @@ const Interview = () => {
 
   function connectSocket() {
     return new Promise<void>((resolve, reject) => {
-      socketRef.current = new WebSocket(`ws://localhost:8080?id=${id}`);
+      socketRef.current = new WebSocket(`${WS_URL}?id=${id}`);
 
       receiveAudioData();
 

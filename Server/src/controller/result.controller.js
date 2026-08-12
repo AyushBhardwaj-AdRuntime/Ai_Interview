@@ -1,26 +1,51 @@
-  
- 
-const  Result = require("../services/result.service")
-    const interviewModel  = require("../model/interview.model")
-    
-    async  function getResult (req , res){ 
-         const id = req.params.id
-         console.log(id)
-           const result = await interviewModel.findById(id ,
-              "interview.questions"
-           )
-          
-   const evaluation =      await Result(result.interview.questions)
-  
-await interviewModel.findByIdAndUpdate(id, {
-    $set: {
-        "interview.result": evaluation,
-        "interview.status": "completed"
+const Result = require("../services/result.service");
+const interviewModel = require("../model/interview.model");
+
+async function getResult(req, res) {
+  try {
+    const id = req.params.id;
+    console.log("[Result] fetching interview:", id);
+
+    const interview = await interviewModel.findById(id, "interview.questions");
+
+    if (!interview) {
+      return res.status(404).json({ message: "Interview not found" });
     }
-});
 
-return res.status(200).json(evaluation);
-               
-     }
+    const questions = interview.interview.questions;
 
-      module.exports = getResult
+    if (!questions || questions.length === 0) {
+      return res.status(400).json({ message: "No questions recorded for this interview." });
+    }
+
+    // Call GPT-120B to evaluate the Q&A transcript
+    const rawEvaluation = await Result(questions);
+
+    // ✅ Fix: parse the JSON string so we store structured data, not a raw string
+    let parsed;
+    try {
+      const cleaned = rawEvaluation.replace(/```json/g, "").replace(/```/g, "").trim();
+      parsed = JSON.parse(cleaned);
+    } catch (parseErr) {
+      console.error("[Result] Failed to parse GPT evaluation JSON:", parseErr.message);
+      return res.status(500).json({ message: "AI returned malformed evaluation. Please try again." });
+    }
+
+    // Persist the structured result into MongoDB
+    await interviewModel.findByIdAndUpdate(id, {
+      $set: {
+        "interview.result": parsed,
+        "interview.status": "completed",
+      },
+    });
+
+    // ✅ Return parsed object (not raw string) so frontend gets correct JSON
+    return res.status(200).json(parsed);
+
+  } catch (err) {
+    console.error("[Result] Error:", err);
+    return res.status(500).json({ message: err.message || "Internal server error" });
+  }
+}
+
+module.exports = getResult;
