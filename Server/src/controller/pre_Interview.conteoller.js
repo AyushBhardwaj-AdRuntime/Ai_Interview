@@ -8,10 +8,15 @@ const { getAuth } = require("@clerk/express");
 
 async function preInterview(req, res) {
     try {
-        const auth = getAuth(req);
+        let auth;
+        try {
+            auth = getAuth(req);
+        } catch (e) {
+            console.warn("getAuth failed:", e.message);
+        }
         const userId = auth?.userId || req.auth?.userId || req.userId;
         if (!userId) {
-            return res.status(401).json({ message: "Unauthorized: Missing user ID." });
+            return res.status(401).json({ message: "Unauthorized: Missing user ID. Please check Clerk keys." });
         }
 
         let resume;

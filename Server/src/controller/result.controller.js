@@ -7,7 +7,12 @@ async function getResult(req, res) {
     console.log("[Result] fetching interview:", id);
 
     const { getAuth } = require("@clerk/express");
-    const auth = getAuth(req);
+    let auth;
+    try {
+        auth = getAuth(req);
+    } catch (e) {
+        console.warn("getAuth failed:", e.message);
+    }
     const userId = auth?.userId || req.auth?.userId || req.userId;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 

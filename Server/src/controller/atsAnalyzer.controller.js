@@ -88,7 +88,12 @@ async function atsAnalyzer(req, res) {
 async function getAtsHistory(req, res) {
   try {
     const { getAuth } = require("@clerk/express");
-    const auth = getAuth(req);
+    let auth;
+    try {
+        auth = getAuth(req);
+    } catch (e) {
+        console.warn("getAuth failed:", e.message);
+    }
     const userId = auth?.userId || req.auth?.userId || req.userId;
     if (!userId || userId.startsWith("anonymous_")) {
       // Guests don't get history unless we want to track them by anonymous ID, but usually dashboard is logged in.
