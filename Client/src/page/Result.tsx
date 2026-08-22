@@ -1,123 +1,316 @@
-import { BACKEND_URL } from '@/lib/config'
-import axios from 'axios'
-import React, { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { BACKEND_URL } from '@/lib/config';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  CheckCircle2,
+  XCircle,
+  ArrowRightCircle,
+  ChevronDown,
+  ChevronUp,
+  BrainCircuit,
+  MessageSquare,
+  Wrench,
+  Award,
+  Loader2
+} from 'lucide-react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+
+import { useAuth } from '@clerk/clerk-react';
+
+const loadingMessages = [
+  "Analyzing your answers...",
+  "Evaluating communication skills...",
+  "Finding weak areas...",
+  "Building your practice plan..."
+];
 
 const Result = () => {
-    const [result, setResult] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
-    const { id } = useParams()
+  const { getToken } = useAuth();
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+  const { id } = useParams();
 
-    useEffect(() => {
-        async function fetchResult() {
-            try {
-                const response = await axios.get(`${BACKEND_URL}/api/v1/result/${id}`)
-                let data = response.data;
-                
-                // The LLM might return a stringified JSON
-                if (typeof data === 'string') {
-                    try {
-                        // Strip potential markdown JSON wrappers
-                        const cleanStr = data.replace(/```json/g, '').replace(/```/g, '').trim();
-                        data = JSON.parse(cleanStr);
-                    } catch (e) {
-                        console.error("Failed to parse JSON result", e);
-                    }
-                }
-                setResult(data)
-            } catch (err) {
-                console.error("Failed to fetch result", err);
-            } finally {
-                setLoading(false);
-            }
-        }
- 
-        fetchResult()
-    }, [id])
-
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <p className="text-slate-500 font-medium">Evaluating interview session...</p>
-            </div>
-        )
+      interval = setInterval(() => {
+        setLoadingStep((prev) => (prev + 1) % loadingMessages.length);
+      }, 2500);
     }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [loading]);
 
-    if (!result) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <p className="text-slate-500 font-medium">Failed to load results. Please try again.</p>
-            </div>
-        )
+  useEffect(() => {
+    async function fetchResult() {
+      try {
+        const token = await getToken();
+        const response = await axios.get(`${BACKEND_URL}/api/v1/result/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        let data = response.data;
+        
+        if (typeof data === 'string') {
+          try {
+            const cleanStr = data.replace(/```json/g, '').replace(/```/g, '').trim();
+            data = JSON.parse(cleanStr);
+          } catch (e) {
+            console.error("Failed to parse JSON result", e);
+          }
+        }
+        setResult(data);
+      } catch (err) {
+        console.error("Failed to fetch result", err);
+      } finally {
+        setLoading(false);
+      }
     }
+ 
+    fetchResult();
+  }, [id]);
 
+  if (loading) {
     return (
-        <div className="min-h-screen bg-slate-50 p-8">
-            <div className="mx-auto max-w-4xl space-y-8">
-                
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Interview Report</h1>
-                        <p className="text-slate-500 mt-1">Detailed evaluation of your performance</p>
-                    </div>
-                    <Link to="/">
-                        <Button variant="outline">New Interview</Button>
-                    </Link>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                    <Card className="bg-white shadow-sm border-slate-200">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">Overall Score</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-end gap-2 mb-2">
-                                <span className="text-4xl font-bold text-slate-900">{result.overallScore || 0}</span>
-                                <span className="text-slate-500 mb-1">/ 100</span>
-                            </div>
-                            <Progress value={result.overallScore || 0} className="h-2" />
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-white shadow-sm border-slate-200">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">Technical Knowledge</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-end gap-2 mb-2">
-                                <span className="text-4xl font-bold text-slate-900">{result.technicalKnowledge || 0}</span>
-                                <span className="text-slate-500 mb-1">/ 100</span>
-                            </div>
-                            <Progress value={result.technicalKnowledge || 0} className="h-2" />
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <Card className="bg-white shadow-sm border-slate-200">
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-xl font-semibold text-slate-900">Feedback Summary</CardTitle>
-                            {result.recommendation && (
-                                <Badge variant={result.recommendation.toLowerCase().includes('hire') && !result.recommendation.toLowerCase().includes('no') ? 'default' : 'destructive'} className="text-sm px-3 py-1">
-                                    {result.recommendation}
-                                </Badge>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed whitespace-pre-wrap">
-                            {result.feedback || "No feedback provided."}
-                        </div>
-                    </CardContent>
-                </Card>
-
-            </div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4">
+        <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-8 relative">
+          <motion.div 
+            initial={{ scale: 1, opacity: 0.5 }}
+            animate={{ scale: 1.5, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="absolute inset-0 rounded-full border border-primary bg-primary/20"
+          />
+          <Loader2 className="w-10 h-10 animate-spin text-primary relative z-10" />
         </div>
-    )
-}
+        
+        <div className="h-8 overflow-hidden relative w-64 text-center">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={loadingStep}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-lg font-medium text-foreground absolute inset-0"
+            >
+              {loadingMessages[loadingStep]}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+      </div>
+    );
+  }
 
-export default Result
+  if (!result) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <div className="text-center">
+          <p className="text-destructive font-medium mb-4">Failed to load results.</p>
+          <Link to="/">
+            <Button variant="default">Go Home</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const getBadgeColor = (rec: string) => {
+    const text = (rec || "").toLowerCase();
+    if (text.includes("strong hire")) return "bg-green-500 hover:bg-green-600";
+    if (text.includes("hire") && !text.includes("no")) return "bg-blue-500 hover:bg-blue-600";
+    if (text.includes("borderline")) return "bg-yellow-500 hover:bg-yellow-600";
+    return "bg-destructive hover:bg-destructive/90";
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground p-6 md:p-12 font-sans selection:bg-primary/20">
+      <div className="mx-auto max-w-5xl space-y-12">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-card border border-border p-8 rounded-[2rem] shadow-sm">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Interview Report</h1>
+            <p className="text-muted-foreground">Actionable coaching based on your performance.</p>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-1">Recommendation</p>
+              <Badge className={`${getBadgeColor(result.recommendation)} text-white px-4 py-1.5 text-sm font-bold`}>
+                {result.recommendation || "Pending"}
+              </Badge>
+            </div>
+            <Link to="/">
+              <Button variant="default" className="rounded-full shadow-lg hover:scale-105 transition-transform">Practice Again</Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Score Breakdown */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <ScoreCard title="Overall Score" score={result.overallScore} icon={<Award className="w-5 h-5" />} highlight />
+          <ScoreCard title="Technical" score={result.technical || result.technicalKnowledge} icon={<BrainCircuit className="w-5 h-5" />} />
+          <ScoreCard title="Communication" score={result.communication} icon={<MessageSquare className="w-5 h-5" />} />
+          <ScoreCard title="Problem Solving" score={result.problemSolving} icon={<Wrench className="w-5 h-5" />} />
+        </div>
+
+        {/* Actionable Feedback */}
+        {(result.strengths?.length > 0 || result.weaknesses?.length > 0 || result.nextSteps?.length > 0) && (
+          <div className="grid md:grid-cols-3 gap-8">
+            <FeedbackList title="What you did well" items={result.strengths} icon={<CheckCircle2 className="w-5 h-5 text-green-500" />} />
+            <FeedbackList title="What went wrong" items={result.weaknesses} icon={<XCircle className="w-5 h-5 text-destructive" />} />
+            <FeedbackList title="Practice Next" items={result.nextSteps} icon={<ArrowRightCircle className="w-5 h-5 text-blue-500" />} />
+          </div>
+        )}
+
+        {/* Legacy Feedback Support */}
+        {typeof result.feedback === 'string' && !result.strengths && (
+          <Card className="bg-card border-border shadow-sm rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Feedback Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="prose prose-slate max-w-none text-foreground whitespace-pre-wrap">
+                {result.feedback}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Question Breakdown */}
+        {result.questionsAnalysis && result.questionsAnalysis.length > 0 && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold tracking-tight">Question Analysis</h2>
+            <div className="space-y-4">
+              {result.questionsAnalysis.map((qa: any, index: number) => (
+                <Card 
+                  key={index} 
+                  className="bg-card border-border shadow-sm rounded-2xl overflow-hidden transition-all duration-300"
+                >
+                  <div 
+                    className="p-6 cursor-pointer hover:bg-muted/30 flex items-start justify-between gap-4"
+                    onClick={() => setExpandedQuestion(expandedQuestion === index ? null : index)}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-sm font-bold text-muted-foreground">Q{index + 1}</span>
+                        <Badge variant="outline" className={qa.score >= 70 ? 'text-green-500 border-green-200' : 'text-yellow-600 border-yellow-200'}>
+                          Score: {qa.score}/100
+                        </Badge>
+                      </div>
+                      <h3 className="font-semibold text-lg leading-snug">{qa.questionText}</h3>
+                    </div>
+                    <Button variant="ghost" size="icon" className="shrink-0 rounded-full">
+                      {expandedQuestion === index ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    </Button>
+                  </div>
+
+                  <AnimatePresence>
+                    {expandedQuestion === index && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <div className="p-6 pt-0 border-t border-border mt-2 space-y-6 bg-muted/10">
+                          
+                          <div>
+                            <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Your Answer</p>
+                            <div className="bg-background rounded-xl p-4 border border-border text-foreground/90 italic">
+                              "{qa.candidateAnswer}"
+                            </div>
+                          </div>
+
+                          <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                              <p className="text-sm font-bold text-green-600 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4" /> Strengths
+                              </p>
+                              <p className="text-sm text-foreground/80">{qa.strengths}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-destructive uppercase tracking-wider mb-2 flex items-center gap-2">
+                                <XCircle className="w-4 h-4" /> Weaknesses
+                              </p>
+                              <p className="text-sm text-foreground/80">{qa.weaknesses}</p>
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2 flex items-center gap-2">
+                              <BrainCircuit className="w-4 h-4" /> Better Answer
+                            </p>
+                            <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-4 border border-blue-100 dark:border-blue-900 text-foreground/90">
+                              {qa.betterAnswer}
+                            </div>
+                          </div>
+
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};
+
+// Helper Components
+
+const ScoreCard = ({ title, score, icon, highlight = false }: { title: string, score: number, icon: React.ReactNode, highlight?: boolean }) => {
+  const val = score || 0;
+  return (
+    <Card className={`rounded-2xl border-border shadow-sm ${highlight ? 'bg-primary/5 border-primary/20' : 'bg-card'}`}>
+      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-wider">{title}</CardTitle>
+        <div className={highlight ? 'text-primary' : 'text-muted-foreground'}>{icon}</div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-baseline gap-1 mb-3">
+          <span className={`text-4xl font-black ${highlight ? 'text-primary' : 'text-foreground'}`}>{val}</span>
+          <span className="text-sm font-medium text-muted-foreground">/ 100</span>
+        </div>
+        {/* We use a standard div for the progress to avoid component errors if Progress doesn't take indicatorColor */}
+        <div className="h-2 w-full bg-muted overflow-hidden rounded-full">
+           <div className={`h-full ${highlight ? 'bg-primary' : 'bg-foreground'}`} style={{ width: `${val}%` }} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const FeedbackList = ({ title, items, icon }: { title: string, items: string[], icon: React.ReactNode }) => {
+  if (!items || items.length === 0) return null;
+  return (
+    <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+      <div className="flex items-center gap-3 mb-6">
+        {icon}
+        <h3 className="font-bold text-lg">{title}</h3>
+      </div>
+      <ul className="space-y-4">
+        {items.map((item, i) => (
+          <li key={i} className="flex items-start gap-3 text-sm text-foreground/80 leading-relaxed">
+            <span className="w-1.5 h-1.5 rounded-full bg-foreground/30 mt-2 shrink-0" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default Result;

@@ -1,67 +1,98 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mic, PhoneOff, Pause, Play, Loader2 } from "lucide-react";
+import { useAuth } from "@clerk/clerk-react";
 
 import { BACKEND_URL, WS_URL } from "@/lib/config";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
 import MediaHandler from "@/Services/mediaHandler";
 
+type SessionState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'paused';
 
 const Interview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [interview, setInterview] = useState(null);
-  const [error, setError] = useState(null);
+  const [interview, setInterview] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [sessionState, setSessionState] = useState<SessionState>('idle');
+  const [elapsed, setElapsed] = useState(0);
+  
   const mediaRef = useRef(new MediaHandler());
-  const socketRef = useRef(null)
+  const socketRef = useRef<WebSocket | null>(null);
+  const speakingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    async function fetchInterview() {
-      try {
-        const response = await axios.get(
-          `${BACKEND_URL}/api/v1/interview/${id}`
-        );
-
-        setInterview(response.data);
-      } catch (err) {
-        console.error(err);
+  const { getToken } = useAuth();
+  
+  const fetchInterview = async () => {
+    try {
+      const token = await getToken();
+      const response = await axios.get(`${BACKEND_URL}/api/v1/interview/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setInterview(response.data);
+    } catch (err) {
+      console.error(err);
+      if (!interview) {
         setError("Failed to load interview. Please try again or check the URL.");
       }
     }
+  };
 
+  useEffect(() => {
     fetchInterview();
     return () => {
       mediaRef.current.stopAudio();
       mediaRef.current.stopAudioPlayback();
+      if (socketRef.current) socketRef.current.close();
+      if (speakingTimeoutRef.current) clearTimeout(speakingTimeoutRef.current);
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
   }, [id]);
+
+  // Timer logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (sessionState === 'listening' || sessionState === 'speaking') {
+      interval = setInterval(() => setElapsed(e => e + 1), 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [sessionState]);
+
+  // Polling logic for question updates when active
+  useEffect(() => {
+    if (sessionState === 'listening' || sessionState === 'speaking') {
+      pollIntervalRef.current = setInterval(() => fetchInterview(), 5000);
+    } else {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    }
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, [sessionState, id]);
 
 
   function connectSocket() {
     return new Promise<void>((resolve, reject) => {
       socketRef.current = new WebSocket(`${WS_URL}?id=${id}`);
-
       receiveAudioData();
 
-      socketRef.current.onopen = () => {
-
-        resolve();
-      };
-
+      socketRef.current.onopen = () => resolve();
+      socketRef.current.onerror = (err) => reject(err);
       socketRef.current.onclose = () => {
-
-      };
-
-      socketRef.current.onerror = (err) => {
-        reject(err);
+        if (sessionState !== 'paused' && sessionState !== 'idle') {
+          setSessionState('idle');
+        }
       };
     });
   }
 
-  function arrayBufferToBase64(buffer) {
+  function arrayBufferToBase64(buffer: ArrayBuffer) {
     const bytes = new Uint8Array(buffer);
     let binary = "";
     for (let i = 0; i < bytes.length; i++) {
@@ -71,25 +102,26 @@ const Interview = () => {
   }
 
   async function sendAudioData() {
-    await mediaRef.current.startAudio((pcmBuffer) => {
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
+    await mediaRef.current.startAudio((pcmBuffer: ArrayBuffer) => {
+      if (socketRef.current?.readyState === WebSocket.OPEN && sessionState !== 'paused') {
         const base64 = arrayBufferToBase64(pcmBuffer);
-        socketRef.current.send(JSON.stringify({
-          type: "audio",
-          data: base64
-        }))
+        socketRef.current.send(JSON.stringify({ type: "audio", data: base64 }));
       }
     });
   }
 
   function receiveAudioData() {
+    if (!socketRef.current) return;
     socketRef.current.onmessage = (event) => {
-      const message = JSON.parse(event.data)
+      const message = JSON.parse(event.data);
       const content = message.serverContent;
       const parts = content?.modelTurn?.parts || [];
 
+      let hasAudio = false;
+
       for (const part of parts) {
         if (part?.inlineData) {
+          hasAudio = true;
           const base64 = part.inlineData.data;
           const binary = atob(base64);
           const bytes = new Uint8Array(binary.length);
@@ -97,125 +129,210 @@ const Interview = () => {
           for (let i = 0; i < binary.length; i++) {
             bytes[i] = binary.charCodeAt(i);
           }
-
           mediaRef.current.playAudio(bytes.buffer);
         }
       }
-    }
+
+      if (hasAudio) {
+        setSessionState('speaking');
+        if (speakingTimeoutRef.current) clearTimeout(speakingTimeoutRef.current);
+        speakingTimeoutRef.current = setTimeout(() => {
+          setSessionState((prev) => (prev === 'speaking' ? 'listening' : prev));
+        }, 1500); // Revert to listening after 1.5s of no audio chunks
+      }
+    };
   }
 
-
-  const startInterview = async () => {
-    try {
-      await connectSocket()
-      await sendAudioData()
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const stopInterview = async () => {
-    try {
-      // Stop microphone
+  const toggleInterview = async () => {
+    if (sessionState === 'idle' || sessionState === 'paused') {
+      try {
+        setSessionState('connecting');
+        if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+          await connectSocket();
+          await sendAudioData();
+        }
+        setSessionState('listening');
+      } catch (err) {
+        console.error("Connection failed", err);
+        setSessionState('idle');
+      }
+    } else {
+      // Pause
+      setSessionState('paused');
       mediaRef.current.stopAudio();
       mediaRef.current.stopAudioPlayback();
-      socketRef.current?.close();
-      socketRef.current = null;
-    } catch (err) {
-      console.error(err);
+      if (socketRef.current) {
+        socketRef.current.close();
+        socketRef.current = null;
+      }
     }
   };
 
   const finishInterview = () => {
-    stopInterview();
+    mediaRef.current.stopAudio();
+    mediaRef.current.stopAudioPlayback();
+    if (socketRef.current) socketRef.current.close();
     navigate(`/result/${id}`);
   };
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-red-500 font-medium">{error}</p>
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+        <p className="text-destructive font-medium">{error}</p>
       </div>
     );
   }
 
   if (!interview) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-slate-500 font-medium">Loading interview workspace...</p>
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
+  // Waveform logic based on state
+  const bars = 15;
+  const getBarAnimation = (index: number) => {
+    if (sessionState === 'idle' || sessionState === 'paused') {
+      return { height: 4 };
+    }
+    if (sessionState === 'connecting') {
+      return { height: [4, 12, 4], transition: { repeat: Infinity, duration: 1, delay: index * 0.1 } };
+    }
+    if (sessionState === 'listening') {
+      // Very soft, subtle animation for listening
+      return { height: [6, 12, 6], transition: { repeat: Infinity, duration: 2.5, delay: index * 0.2, ease: "easeInOut" } };
+    }
+    if (sessionState === 'speaking') {
+      // Fast, animated waveform for AI speaking
+      const heights = [10, 24, 40, 16, 32, 12, 28, 48, 20, 36, 14, 26, 44, 18, 30];
+      const h = heights[index % heights.length];
+      return { height: [h * 0.4, h, h * 0.4], transition: { repeat: Infinity, duration: 0.6 + Math.random() * 0.4, delay: Math.random() * 0.2 } };
+    }
+  };
+
+  const stateText = {
+    idle: "READY TO START",
+    connecting: "CONNECTING...",
+    listening: "LISTENING",
+    speaking: "AI SPEAKING",
+    paused: "PAUSED"
+  };
+
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const questions = interview?.interview?.questions || [];
+  const questionCount = Math.max(1, questions.length);
+  // Default to a prompt if no questions have been recorded yet, or show the latest recorded question text.
+  let displayedQuestionText = "Please begin when you are ready. I will adapt to your responses.";
+  if (questions.length > 0 && questions[questions.length - 1].question) {
+    displayedQuestionText = questions[questions.length - 1].question;
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="mx-auto max-w-6xl">
-
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              {interview?.candidateProfile?.name || "Candidate Interview"}
-            </h1>
-            <p className="mt-1 text-sm text-slate-500 font-medium">
-              {interview?.candidateProfile?.email || "Ready for interview session"}
-            </p>
+    <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
+      {/* Immersive Central Card */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-3xl rounded-[2rem] border border-border bg-card shadow-2xl overflow-hidden relative"
+      >
+        <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-10">
+          <div className="flex items-center gap-3 bg-background/50 backdrop-blur-md px-4 py-2 rounded-full border border-border">
+            <div className={`w-2 h-2 rounded-full ${sessionState === 'listening' ? 'bg-primary animate-pulse' : sessionState === 'speaking' ? 'bg-blue-500 animate-pulse' : 'bg-muted-foreground'}`} />
+            <span className="text-xs font-bold tracking-wider text-muted-foreground">
+              {stateText[sessionState]}
+            </span>
           </div>
+          
           <div className="flex items-center gap-3">
-            <Button
-              onClick={startInterview}
-              variant="default"
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Start Session
-            </Button>
-            <Button
-              onClick={stopInterview}
-              variant="outline"
-            >
-              Pause
-            </Button>
-            <Button
-              onClick={finishInterview}
-              variant="secondary"
-            >
-              Finish & View Results
-            </Button>
+            {/* Subtle Progress Indicator */}
+            {(sessionState !== 'idle' && sessionState !== 'paused' && sessionState !== 'connecting') && (
+              <span className="text-sm font-medium text-muted-foreground bg-background/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-border">
+                Question {questionCount} of 6
+              </span>
+            )}
+            
+            {/* Subtle Timer */}
+            <div className="bg-background/50 backdrop-blur-md px-4 py-2 rounded-full border border-border text-sm font-mono font-medium text-foreground w-[72px] text-center">
+              {formatTime(elapsed)}
+            </div>
           </div>
         </div>
 
-        {/* Main Layout */}
-        <div className="grid grid-cols-12 gap-8">
+        <div className="pt-32 pb-24 px-8 text-center flex flex-col items-center justify-center bg-gradient-to-b from-card to-muted/10 relative">
+          
+          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-10 relative">
+            <AnimatePresence>
+              {(sessionState === 'listening' || sessionState === 'connecting') && (
+                <motion.div 
+                  initial={{ scale: 1, opacity: 0.5 }}
+                  animate={{ scale: 1.5, opacity: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className="absolute inset-0 rounded-full border border-primary bg-primary/20"
+                />
+              )}
+            </AnimatePresence>
+            <Mic className={`w-10 h-10 ${sessionState === 'idle' || sessionState === 'paused' ? 'text-muted-foreground' : 'text-primary'}`} />
+          </div>
 
-          {/* Candidate */}
-          <Card className="col-span-5 h-[550px] bg-white border-slate-200 shadow-sm p-6">
-            <h2 className="mb-4 text-lg font-semibold text-slate-800">
-              Candidate View
-            </h2>
-            <div className="flex h-[420px] items-center justify-center rounded-lg border border-slate-100 bg-slate-50">
-              <p className="text-slate-400 text-sm">Camera feed (optional)</p>
-            </div>
-          </Card>
-
-          {/* HR Interviewer */}
-          <Card className="col-span-7 h-[550px] bg-white border-slate-200 shadow-sm p-6 flex flex-col">
-            <h2 className="mb-4 text-lg font-semibold text-slate-800">
-              Interviewer
-            </h2>
-            <div className="flex-1 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-6 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" /></svg>
-                </div>
-                <p className="text-slate-500 font-medium">Voice channel open</p>
-                <p className="text-slate-400 text-sm mt-1">Interviewer will speak automatically</p>
-              </div>
-            </div>
-          </Card>
+          {/* Dynamic Question Text */}
+          <h3 className="text-2xl sm:text-3xl font-semibold mb-12 max-w-xl text-foreground min-h-[80px]">
+            {sessionState === 'idle' 
+              ? "Please begin when you are ready. I will adapt to your responses."
+              : displayedQuestionText}
+          </h3>
+          
+          {/* Dynamic Waveform */}
+          <div className="flex items-center gap-1.5 h-16">
+            {Array.from({ length: bars }).map((_, i) => (
+              <motion.div 
+                key={i}
+                animate={getBarAnimation(i)}
+                className={`w-2 rounded-full ${sessionState === 'speaking' ? 'bg-blue-500/80' : sessionState === 'idle' || sessionState === 'paused' ? 'bg-border' : 'bg-primary/80'}`}
+                style={{ minHeight: '4px' }}
+              />
+            ))}
+          </div>
 
         </div>
 
-      </div>
+        {/* Controls */}
+        <div className="bg-muted/30 border-t border-border p-6 flex items-center justify-center gap-6">
+          <Button 
+            onClick={toggleInterview}
+            size="lg"
+            variant={sessionState === 'idle' || sessionState === 'paused' ? 'default' : 'outline'}
+            className={`h-16 w-16 rounded-full p-0 flex items-center justify-center transition-all ${sessionState === 'idle' || sessionState === 'paused' ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 hover:scale-105' : 'bg-background hover:bg-muted'}`}
+            disabled={sessionState === 'connecting'}
+          >
+            {sessionState === 'connecting' ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : sessionState === 'idle' || sessionState === 'paused' ? (
+              <Play className="w-6 h-6 ml-1" />
+            ) : (
+              <Pause className="w-6 h-6" />
+            )}
+          </Button>
+
+          <Button 
+            onClick={finishInterview}
+            size="lg"
+            variant="destructive"
+            className="h-16 px-8 rounded-full text-base font-semibold shadow-lg shadow-destructive/20 hover:scale-105 transition-all"
+          >
+            <PhoneOff className="w-5 h-5 mr-2" />
+            End Interview
+          </Button>
+        </div>
+      </motion.div>
     </div>
   );
 };
