@@ -6,7 +6,7 @@ const normalizeCandidateProfile = require("../services/profile.service");
 
 async function atsAnalyzer(req, res) {
   try {
-    const userId = req.userId;
+    const userId = req.auth?.userId || req.userId;
 
     // ── 1. Get JD Text ────────────────────────────────────────────────────
     let jdText = req.body?.jdText || "";
@@ -101,7 +101,8 @@ async function getAtsHistory(req, res) {
     }
 
     const history = await AtsResult.find({ userId }).sort({ createdAt: -1 });
-    return res.status(200).json({ success: true, data: history });
+    // Return plain array — frontend expects res.data to be the array directly
+    return res.status(200).json(history);
   } catch (err) {
     console.error("getAtsHistory error:", err);
     return res.status(500).json({ success: false, code: "SERVER_ERROR", message: err.message });

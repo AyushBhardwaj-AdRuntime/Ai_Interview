@@ -7,6 +7,7 @@ import { WS_URL } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import MediaHandler from "@/Services/mediaHandler";
 import { useInterview } from "@/hooks/useInterview";
+import { toast } from "sonner";
 
 type SessionState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'paused';
 
@@ -24,6 +25,8 @@ const Interview = () => {
   const socketRef = useRef<WebSocket | null>(null);
   const speakingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const intentionalCloseRef = useRef(false); // true when user pauses/ends — don't reconnect
 
   useEffect(() => {
     if (queryError) {
@@ -70,11 +73,38 @@ const Interview = () => {
       socketRef.current = new WebSocket(`${WS_URL}?id=${id}`);
       receiveAudioData();
 
-      socketRef.current.onopen = () => resolve();
+      socketRef.current.onopen = () => {
+        reconnectAttemptRef.current = 0; // reset on successful connection
+        resolve();
+      };
       socketRef.current.onerror = (err) => reject(err);
       socketRef.current.onclose = () => {
-        if (sessionState !== 'paused' && sessionState !== 'idle') {
+        // If user intentionally paused or ended, do not reconnect
+        if (intentionalCloseRef.current) return;
+
+        // Unexpected drop — attempt reconnect with backoff
+        const MAX_RETRIES = 3;
+        const attempt = reconnectAttemptRef.current;
+
+        if (attempt < MAX_RETRIES) {
+          reconnectAttemptRef.current += 1;
+          const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+          toast.warning(`Connection dropped. Reconnecting... (${attempt + 1}/${MAX_RETRIES})`);
+          setSessionState('connecting');
+
+          setTimeout(async () => {
+            try {
+              await connectSocket();
+              await sendAudioData();
+              setSessionState('listening');
+            } catch {
+              // Will trigger onclose again which will retry or give up
+            }
+          }, delay);
+        } else {
+          toast.error('Connection lost. Please pause and resume to try again.');
           setSessionState('idle');
+          reconnectAttemptRef.current = 0;
         }
       };
     });
@@ -133,6 +163,7 @@ const Interview = () => {
 
   const toggleInterview = async () => {
     if (sessionState === 'idle' || sessionState === 'paused') {
+      intentionalCloseRef.current = false; // allow reconnect
       try {
         setSessionState('connecting');
         if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
@@ -142,10 +173,12 @@ const Interview = () => {
         setSessionState('listening');
       } catch (err) {
         console.error("Connection failed", err);
+        toast.error('Failed to connect. Check your microphone and try again.');
         setSessionState('idle');
       }
     } else {
-      // Pause
+      // Intentional pause — mark so onclose doesn't trigger reconnect
+      intentionalCloseRef.current = true;
       setSessionState('paused');
       mediaRef.current.stopAudio();
       mediaRef.current.stopAudioPlayback();
@@ -157,6 +190,7 @@ const Interview = () => {
   };
 
   const finishInterview = () => {
+    intentionalCloseRef.current = true; // don't reconnect on end
     mediaRef.current.stopAudio();
     mediaRef.current.stopAudioPlayback();
     if (socketRef.current) socketRef.current.close();

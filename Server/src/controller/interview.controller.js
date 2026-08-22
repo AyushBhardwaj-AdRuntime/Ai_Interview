@@ -54,7 +54,8 @@ async function getMyInterviews(req, res) {
       .find({ userId })
       .sort({ createdAt: -1 });
       
-    return res.status(200).json({ success: true, data: interviews });
+    // Return plain array — frontend expects res.data to be the array directly
+    return res.status(200).json(interviews);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, code: "SERVER_ERROR", message: "Internal Server Error" });
