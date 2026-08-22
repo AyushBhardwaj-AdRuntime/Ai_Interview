@@ -7,6 +7,11 @@ const interviewModel = require("../model/interview.model")
 
 async function preInterview(req, res) {
     try {
+        const userId = req.auth?.userId || req.userId;
+        if (!userId) {
+            return res.status(401).json({ message: "Unauthorized: Missing user ID." });
+        }
+
         let resume;
 
         if (req.file) {
@@ -18,10 +23,10 @@ async function preInterview(req, res) {
 
             // ✅ Upsert — one resume per user, replaces on new upload
             resume = await resumeModel.findOneAndUpdate(
-                { userId: req.auth.userId },          // find by authenticated clerk user
+                { userId },          // find by authenticated clerk user
                 {
                     $set: {
-                        userId: req.auth.userId,
+                        userId,
                         candidateProfile,
                         originalFile: { name: req.file.originalname },
                     }
@@ -34,7 +39,7 @@ async function preInterview(req, res) {
             );
         } else {
             // Check if user already has a saved resume (e.g. from ATS)
-            resume = await resumeModel.findOne({ userId: req.auth.userId }).sort({ createdAt: -1 });
+            resume = await resumeModel.findOne({ userId }).sort({ createdAt: -1 });
             
             if (!resume) {
                 return res.status(400).json({ message: "Resume file is required. No saved resume found." });
@@ -52,7 +57,7 @@ async function preInterview(req, res) {
 
         const interview = await interviewModel.create({
             resumeId: resume._id,
-            userId: req.auth.userId,
+            userId,
             jobTitle,
             company,
             jobDescription,
