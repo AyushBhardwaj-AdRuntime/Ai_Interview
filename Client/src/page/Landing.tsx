@@ -2,14 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Target, Briefcase, Mic, CheckCircle2, BarChart } from "lucide-react";
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
-import Navbar from "@/components/layout/Navbar";
+
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-x-hidden font-sans">
       
-      {/* NAVBAR */}
-      <Navbar />
-
       <main className="pt-28 pb-12">
         {/* HERO */}
         <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center space-y-5 pt-8">

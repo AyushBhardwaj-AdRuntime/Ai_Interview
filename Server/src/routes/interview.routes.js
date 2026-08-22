@@ -8,8 +8,10 @@ const getResult = require("../controller/result.controller")
   dest: "uploads/"
 });
 
+const { preInterviewLimiter } = require("../middleware/rateLimiter");
 router.post(
     "/pre-interview",
+    preInterviewLimiter,
     upload.single("resume"),
     preInterview
 );

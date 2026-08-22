@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, PhoneOff, Pause, Play, Loader2 } from "lucide-react";
-import { useAuth } from "@clerk/clerk-react";
 
 import { BACKEND_URL, WS_URL } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import MediaHandler from "@/Services/mediaHandler";
+
+import { useInterview } from "@/hooks/useInterview";
 
 type SessionState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'paused';
 
@@ -15,7 +15,8 @@ const Interview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [interview, setInterview] = useState<any>(null);
+  const { data: interview, error: queryError, refetch: fetchInterview, isLoading } = useInterview(id || '');
+
   const [error, setError] = useState<string | null>(null);
   const [sessionState, setSessionState] = useState<SessionState>('idle');
   const [elapsed, setElapsed] = useState(0);
@@ -25,25 +26,13 @@ const Interview = () => {
   const speakingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { getToken } = useAuth();
-  
-  const fetchInterview = async () => {
-    try {
-      const token = await getToken();
-      const response = await axios.get(`${BACKEND_URL}/api/v1/interview/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setInterview(response.data);
-    } catch (err) {
-      console.error(err);
-      if (!interview) {
-        setError("Failed to load interview. Please try again or check the URL.");
-      }
+  useEffect(() => {
+    if (queryError) {
+      setError("Failed to load interview. Please try again or check the URL.");
     }
-  };
+  }, [queryError]);
 
   useEffect(() => {
-    fetchInterview();
     return () => {
       mediaRef.current.stopAudio();
       mediaRef.current.stopAudioPlayback();
@@ -51,7 +40,7 @@ const Interview = () => {
       if (speakingTimeoutRef.current) clearTimeout(speakingTimeoutRef.current);
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
-  }, [id]);
+  }, []);
 
   // Timer logic
   useEffect(() => {
@@ -74,7 +63,7 @@ const Interview = () => {
     return () => {
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
-  }, [sessionState, id]);
+  }, [sessionState, fetchInterview]);
 
 
   function connectSocket() {
@@ -243,15 +232,15 @@ const Interview = () => {
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="w-full max-w-3xl rounded-[2rem] border border-border bg-card shadow-2xl overflow-hidden relative"
       >
-        <div className="absolute top-6 left-6 right-6 flex justify-between items-center z-10">
-          <div className="flex items-center gap-3 bg-background/50 backdrop-blur-md px-4 py-2 rounded-full border border-border">
+        <div className="absolute top-4 sm:top-6 left-4 sm:left-6 right-4 sm:right-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 z-10">
+          <div className="flex items-center gap-3 bg-background/50 backdrop-blur-md px-4 py-2 rounded-full border border-border w-full sm:w-auto justify-center sm:justify-start">
             <div className={`w-2 h-2 rounded-full ${sessionState === 'listening' ? 'bg-primary animate-pulse' : sessionState === 'speaking' ? 'bg-blue-500 animate-pulse' : 'bg-muted-foreground'}`} />
             <span className="text-xs font-bold tracking-wider text-muted-foreground">
               {stateText[sessionState]}
             </span>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
             {/* Subtle Progress Indicator */}
             {(sessionState !== 'idle' && sessionState !== 'paused' && sessionState !== 'connecting') && (
               <span className="text-sm font-medium text-muted-foreground bg-background/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-border">
@@ -305,7 +294,7 @@ const Interview = () => {
         </div>
 
         {/* Controls */}
-        <div className="bg-muted/30 border-t border-border p-6 flex items-center justify-center gap-6">
+        <div className="bg-muted/30 border-t border-border p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-4 sm:mt-0">
           <Button 
             onClick={toggleInterview}
             size="lg"
@@ -326,7 +315,7 @@ const Interview = () => {
             onClick={finishInterview}
             size="lg"
             variant="destructive"
-            className="h-16 px-8 rounded-full text-base font-semibold shadow-lg shadow-destructive/20 hover:scale-105 transition-all"
+            className="h-14 sm:h-16 px-6 sm:px-8 rounded-full text-base font-semibold shadow-lg shadow-destructive/20 hover:scale-105 transition-all w-full sm:w-auto"
           >
             <PhoneOff className="w-5 h-5 mr-2" />
             End Interview

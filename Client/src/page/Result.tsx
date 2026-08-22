@@ -1,9 +1,8 @@
 import { BACKEND_URL } from '@/lib/config';
-import axios from 'axios';
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import Navbar from '@/components/layout/Navbar';
 import {
   CheckCircle2,
   XCircle,
@@ -25,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 import { useAuth } from '@clerk/clerk-react';
+import { useInterviewResult } from '@/hooks/useInterview';
 
 const loadingMessages = [
   "Analyzing your answers...",
@@ -34,12 +34,10 @@ const loadingMessages = [
 ];
 
 const Result = () => {
-  const { getToken } = useAuth();
-  const [result, setResult] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { id } = useParams();
+  const { data: result, isLoading: loading } = useInterviewResult(id || '');
   const [loadingStep, setLoadingStep] = useState(0);
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
-  const { id } = useParams();
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -53,34 +51,6 @@ const Result = () => {
     };
   }, [loading]);
 
-  useEffect(() => {
-    async function fetchResult() {
-      try {
-        const token = await getToken();
-        const response = await axios.get(`${BACKEND_URL}/api/v1/result/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        let data = response.data;
-        
-        if (typeof data === 'string') {
-          try {
-            const cleanStr = data.replace(/```json/g, '').replace(/```/g, '').trim();
-            data = JSON.parse(cleanStr);
-          } catch (e) {
-            console.error("Failed to parse JSON result", e);
-          }
-        }
-        setResult(data);
-      } catch (err) {
-        console.error("Failed to fetch result", err);
-      } finally {
-        setLoading(false);
-      }
-    }
- 
-    fetchResult();
-  }, [id]);
-
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4">
@@ -92,7 +62,7 @@ const Result = () => {
             transition={{ repeat: Infinity, duration: 2 }}
             className="absolute inset-0 rounded-full border border-primary bg-primary/20"
           />
-          <Loader2 className="w-10 h-10 animate-spin text-primary relative z-10" />
+          <BrainCircuit className="w-10 h-10 animate-pulse text-primary relative z-10" />
         </div>
         
         <div className="h-8 overflow-hidden relative w-64 text-center">
@@ -136,7 +106,7 @@ const Result = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
-      <Navbar />
+      
       <div className="mx-auto max-w-5xl space-y-12 p-6 md:p-12 pt-24 md:pt-32">
         
         {/* Header Section */}

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/clerk-react";
+import { useCreateInterview } from "@/hooks/useInterview";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,6 @@ import {
 import ResumeDropzone from "@/components/ui/ResumeDropzone";
 import { BACKEND_URL } from "@/lib/config";
 import { ArrowLeft, ArrowRight, Upload, Briefcase, Settings2, PlayCircle, FileText, Loader2 } from "lucide-react";
-import Navbar from "@/components/layout/Navbar";
 
 const steps = [
   { id: 1, name: "Resume", icon: Upload },
@@ -76,6 +75,8 @@ const Form = () => {
     setStep((s) => Math.max(s - 1, 1));
   };
 
+  const { mutateAsync: createPreInterview, isPending: isLoadingInterview } = useCreateInterview();
+
   async function prepareInterview() {
     const formData = new FormData();
     try {
@@ -91,18 +92,13 @@ const Form = () => {
       formData.append("difficulty", difficulty);
       formData.append("experience", experience);
       
-      const token = await getToken();
-      const response = await axios.post(`${BACKEND_URL}/api/v1/pre-interview`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const data = await createPreInterview(formData);
       
-      setInterviewId(response.data.id);
+      setInterviewId(data._id || (data as any).id);
       toast.success("Interview prepared successfully!");
       setStep(4);
-    } catch (err) {
-      const message = axios.isAxiosError(err)
-        ? err.response?.data?.message || "Setup failed. Please try again."
-        : "Setup failed. Please try again.";
+    } catch (err: any) {
+      const message = err.response?.data?.message || "Setup failed. Please try again.";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -117,8 +113,8 @@ const Form = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pt-24">
-      {/* Navbar Minimal */}
-      <Navbar />
+      
+      
 
       <div className="w-full max-w-2xl">
         {/* Progress Tracker */}

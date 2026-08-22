@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { BACKEND_URL } from '@/lib/config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Navbar from '@/components/layout/Navbar';
 import { 
   Award, 
   BarChart, 
@@ -18,56 +17,55 @@ import {
   Loader2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+
+import { useInterviewHistory } from '@/hooks/useInterview';
+import { useAtsHistory } from '@/hooks/useAts';
 
 const Dashboard = () => {
-  const { getToken } = useAuth();
   const { user } = useUser();
-  const [interviews, setInterviews] = useState<any[]>([]);
-  const [atsScans, setAtsScans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<'interviews' | 'ats'>('interviews');
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const token = await getToken();
-        
-        const [interviewsRes, atsRes] = await Promise.allSettled([
-          axios.get(`${BACKEND_URL}/api/v1/interviews/me`, { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get(`${BACKEND_URL}/api/v1/ats/me`, { headers: { Authorization: `Bearer ${token}` } })
-        ]);
-        
-        if (interviewsRes.status === 'fulfilled') {
-          const completed = interviewsRes.value.data.filter((inv: any) => inv.interview?.status === 'completed' && inv.interview?.result?.overallScore);
-          completed.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          setInterviews(completed);
-        }
+  const { data: rawInterviews = [], isLoading: isLoadingInterviews, isError: isErrorInterviews } = useInterviewHistory();
+  const { data: rawAtsScans = [], isLoading: isLoadingAts, isError: isErrorAts } = useAtsHistory();
 
-        if (atsRes.status === 'fulfilled') {
-          setAtsScans(atsRes.value.data);
-        } else {
-          console.error("Failed to load ATS history", atsRes.reason);
-        }
+  const loading = isLoadingInterviews || isLoadingAts;
+  const error = (isErrorInterviews || isErrorAts) ? "Unable to load dashboard data." : "";
 
-      } catch (err) {
-        console.error("Failed to fetch dashboard data", err);
-        setError("Unable to load dashboard data.");
-      } finally {
-        setLoading(false);
-      }
-    }
+  // Filter and sort interviews
+  const interviews = React.useMemo(() => {
+    const completed = rawInterviews.filter((inv: any) => inv.interview?.status === 'completed' && inv.interview?.result?.overallScore);
+    return completed.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [rawInterviews]);
 
-    if (user) {
-      fetchData();
-    }
-  }, [getToken, user]);
+  const atsScans = rawAtsScans;
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-muted-foreground animate-pulse">Loading your dashboard...</p>
+      <div className="min-h-screen bg-background text-foreground font-sans pb-24 pt-24 px-6 md:px-12">
+        <div className="max-w-6xl mx-auto space-y-10">
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-6 w-96" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Skeleton className="h-32 w-full rounded-2xl" />
+            <Skeleton className="h-32 w-full rounded-2xl" />
+            <Skeleton className="h-32 w-full rounded-2xl" />
+          </div>
+          <div className="grid lg:grid-cols-3 gap-8 mt-8">
+            <div className="lg:col-span-2 space-y-4">
+              <Skeleton className="h-8 w-48 mb-4" />
+              <Skeleton className="h-24 w-full rounded-2xl" />
+              <Skeleton className="h-24 w-full rounded-2xl" />
+              <Skeleton className="h-24 w-full rounded-2xl" />
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-48 mb-4" />
+              <Skeleton className="h-[400px] w-full rounded-2xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -116,7 +114,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 pb-24">
-      <Navbar />
+      
       <div className="mx-auto max-w-6xl space-y-10 p-6 md:p-12 pt-24 md:pt-32">
         
         {/* Header */}

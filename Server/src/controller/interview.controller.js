@@ -13,7 +13,7 @@ async function getInterview(req, res) {
     }
     const userId = auth?.userId || req.auth?.userId || req.userId;
 
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    if (!userId) return res.status(401).json({ success: false, code: "UNAUTHORIZED", message: "Unauthorized" });
 
     const interview = await interviewModel
       .findOneAndUpdate(
@@ -24,7 +24,7 @@ async function getInterview(req, res) {
       .populate("resumeId");
 
     if (!interview) {
-      return res.status(404).json({ message: "Interview not found or unauthorized" });
+      return res.status(404).json({ success: false, code: "NOT_FOUND", message: "Interview not found or unauthorized" });
     }
 
     const response = {
@@ -32,10 +32,10 @@ async function getInterview(req, res) {
       candidateProfile: interview.resumeId?.candidateProfile || null,
     };
 
-    return res.status(200).json(response);
+    return res.status(200).json({ success: true, ...response });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ success: false, code: "SERVER_ERROR", message: "Internal Server Error" });
   }
 }
 
@@ -48,16 +48,16 @@ async function getMyInterviews(req, res) {
         console.warn("getAuth failed:", e.message);
     }
     const userId = auth?.userId || req.auth?.userId || req.userId;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    if (!userId) return res.status(401).json({ success: false, code: "UNAUTHORIZED", message: "Unauthorized" });
 
     const interviews = await interviewModel
       .find({ userId })
       .sort({ createdAt: -1 });
       
-    return res.status(200).json(interviews);
+    return res.status(200).json({ success: true, data: interviews });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ success: false, code: "SERVER_ERROR", message: "Internal Server Error" });
   }
 }
 

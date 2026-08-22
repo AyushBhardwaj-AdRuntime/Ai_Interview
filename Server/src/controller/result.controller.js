@@ -14,23 +14,23 @@ async function getResult(req, res) {
         console.warn("getAuth failed:", e.message);
     }
     const userId = auth?.userId || req.auth?.userId || req.userId;
-    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    if (!userId) return res.status(401).json({ success: false, code: "UNAUTHORIZED", message: "Unauthorized" });
 
     const interview = await interviewModel.findOne({ _id: id, userId }, "interview.questions interview.result");
 
     if (!interview) {
-      return res.status(404).json({ message: "Interview not found or unauthorized" });
+      return res.status(404).json({ success: false, code: "NOT_FOUND", message: "Interview not found or unauthorized" });
     }
 
     // If result already exists, return it to avoid re-evaluating
     if (interview.interview?.result && interview.interview.result.overallScore) {
-      return res.status(200).json(interview.interview.result);
+      return res.status(200).json({ success: true, data: interview.interview.result });
     }
 
     const questions = interview.interview.questions;
 
     if (!questions || questions.length === 0) {
-      return res.status(400).json({ message: "No questions recorded for this interview." });
+      return res.status(400).json({ success: false, code: "BAD_REQUEST", message: "No questions recorded for this interview." });
     }
 
     // Call GPT-120B to evaluate the Q&A transcript
@@ -43,7 +43,7 @@ async function getResult(req, res) {
       parsed = JSON.parse(cleaned);
     } catch (parseErr) {
       console.error("[Result] Failed to parse GPT evaluation JSON:", parseErr.message);
-      return res.status(500).json({ message: "AI returned malformed evaluation. Please try again." });
+      return res.status(500).json({ success: false, code: "SERVER_ERROR", message: "AI returned malformed evaluation. Please try again." });
     }
 
     // Persist the structured result into MongoDB
@@ -55,11 +55,11 @@ async function getResult(req, res) {
     });
 
     // ✅ Return parsed object (not raw string) so frontend gets correct JSON
-    return res.status(200).json(parsed);
+    return res.status(200).json({ success: true, data: parsed });
 
   } catch (err) {
     console.error("[Result] Error:", err);
-    return res.status(500).json({ message: err.message || "Internal server error" });
+    return res.status(500).json({ success: false, code: "SERVER_ERROR", message: err.message || "Internal server error" });
   }
 }
 

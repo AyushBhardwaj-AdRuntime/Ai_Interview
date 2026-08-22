@@ -62,6 +62,20 @@ async function preInterview(req, res) {
         const difficulty = req.body.difficulty || "Medium";
         const experience = req.body.experience || "1-3 years";
 
+        // Idempotency / Duplicate protection: Check if a pending interview for this user & job was created in the last 2 minutes
+        const twoMinsAgo = new Date(Date.now() - 2 * 60 * 1000);
+        const existingPending = await interviewModel.findOne({
+            userId,
+            jobTitle,
+            "interview.status": "pending",
+            createdAt: { $gte: twoMinsAgo }
+        });
+
+        if (existingPending) {
+            console.log("[PreInterview] Returning recently created duplicate interview:", existingPending._id);
+            return res.status(200).json({ success: true, interview: existingPending, id: existingPending._id });
+        }
+
         const interview = await interviewModel.create({
             resumeId: resume._id,
             userId,

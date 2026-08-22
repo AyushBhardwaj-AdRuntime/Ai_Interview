@@ -24,8 +24,13 @@ connectDb()
 
 const anonymousMiddleware = require("./middleware/anonymous.middleware");
 
+const { generalLimiter } = require("./middleware/rateLimiter");
+
 // Add Clerk middleware to parse the auth state for other routes
 app.use(clerkMiddleware());
+
+// General API Rate Limiter
+app.use(generalLimiter);
 
 // Secure the routes
 // ATS route remains accessible for guests via anonymous session

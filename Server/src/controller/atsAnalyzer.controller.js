@@ -13,7 +13,7 @@ async function atsAnalyzer(req, res) {
     const jdFile = req.files?.jdFile?.[0];
     if (!jdText && jdFile) jdText = await extractResumeText(jdFile);
     if (!jdText) {
-      return res.status(400).json({ message: "Job Description is required." });
+      return res.status(400).json({ success: false, code: "MISSING_JD", message: "Job Description is required." });
     }
 
     // ── 2. Get / Save Resume ──────────────────────────────────────────────
@@ -36,7 +36,7 @@ async function atsAnalyzer(req, res) {
     } else {
       const existing = await Resume.findOne({ userId }).sort({ createdAt: -1 });
       if (!existing) {
-        return res.status(404).json({ message: "No resume found. Please upload your resume." });
+        return res.status(404).json({ success: false, code: "RESUME_NOT_FOUND", message: "No resume found. Please upload your resume." });
       }
       resumeData = existing.candidateProfile;
       resumeName = existing.originalFile?.name || "Saved Resume";
@@ -82,7 +82,7 @@ async function atsAnalyzer(req, res) {
 
   } catch (err) {
     console.error("atsAnalyzer error:", err);
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, code: "SERVER_ERROR", message: err.message });
   }
 }
 async function getAtsHistory(req, res) {
@@ -97,14 +97,14 @@ async function getAtsHistory(req, res) {
     const userId = auth?.userId || req.auth?.userId || req.userId;
     if (!userId || userId.startsWith("anonymous_")) {
       // Guests don't get history unless we want to track them by anonymous ID, but usually dashboard is logged in.
-      return res.status(401).json({ message: "Must be logged in to view ATS history." });
+      return res.status(401).json({ success: false, code: "UNAUTHORIZED", message: "Must be logged in to view ATS history." });
     }
 
     const history = await AtsResult.find({ userId }).sort({ createdAt: -1 });
-    return res.status(200).json(history);
+    return res.status(200).json({ success: true, data: history });
   } catch (err) {
     console.error("getAtsHistory error:", err);
-    return res.status(500).json({ message: err.message });
+    return res.status(500).json({ success: false, code: "SERVER_ERROR", message: err.message });
   }
 }
 

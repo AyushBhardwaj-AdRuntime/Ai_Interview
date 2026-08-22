@@ -4,15 +4,29 @@ import Interview from "@/page/Interview";
 import Result from "@/page/Result";
 import AtsChecker from "@/page/AtsChecker";
 import Dashboard from "@/page/Dashboard";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import GlobalNavbar from "@/components/layout/GlobalNavbar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import React from "react";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key. Please set VITE_CLERK_PUBLISHABLE_KEY in your .env file.");
 }
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -27,43 +41,72 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const App = () => {
+const PageTransition = ({ children }: { children: React.ReactNode }) => {
   return (
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-      <BrowserRouter>
-        <Routes>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
+      className="w-full h-full"
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  
+  return (
+    <ErrorBoundary>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
           {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/ats" element={<AtsChecker />} />
+          <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
+          <Route path="/ats" element={<PageTransition><AtsChecker /></PageTransition>} />
 
           {/* Protected Routes */}
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              <Dashboard />
+              <PageTransition><Dashboard /></PageTransition>
             </ProtectedRoute>
           } />
           <Route path="/setup" element={
             <ProtectedRoute>
-              <Form />
+              <PageTransition><Form /></PageTransition>
             </ProtectedRoute>
           } />
           <Route path="/interview/:id" element={
             <ProtectedRoute>
-              <Interview />
+              <PageTransition><Interview /></PageTransition>
             </ProtectedRoute>
           } />
           <Route path="/result/:id" element={
             <ProtectedRoute>
-              <Result />
+              <PageTransition><Result /></PageTransition>
             </ProtectedRoute>
           } />
           
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        <Toaster position="top-right" />
-      </BrowserRouter>
-    </ClerkProvider>
+      </AnimatePresence>
+    </ErrorBoundary>
+  );
+};
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+        <BrowserRouter>
+          <GlobalNavbar />
+          <AnimatedRoutes />
+          <Toaster position="top-right" />
+        </BrowserRouter>
+      </ClerkProvider>
+    </QueryClientProvider>
   );
 };
 

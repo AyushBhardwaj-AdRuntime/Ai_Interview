@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { BACKEND_URL } from "@/lib/config";
 import { Upload, ChevronRight, FileText, CheckCircle2, AlertTriangle, AlertCircle, Sparkles, PlusCircle } from "lucide-react";
-import Navbar from "@/components/layout/Navbar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAtsAnalysis } from "@/hooks/useAts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Step = "form" | "loading" | "score" | "questions" | "analyzing" | "paywall";
@@ -74,6 +74,8 @@ export default function AtsChecker() {
   };
 
   // ── Step 1: submit form → API call ─────────────────────────────────────────
+  const { mutateAsync: analyzeResume, isPending } = useAtsAnalysis();
+
   const handleAnalyze = async () => {
     if (!resumeFile) { setError("Please upload your resume."); return; }
     if (!jdText.trim()) { setError("Please paste the job description."); return; }
@@ -86,12 +88,9 @@ export default function AtsChecker() {
       form.append("resume", resumeFile);
       form.append("jdText", jdText);
 
-      const res = await axios.post(`${BACKEND_URL}/api/v1/ats/analyze`, form, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const data = await analyzeResume(form);
 
-      setResult(res.data);
+      setResult(data);
       setStep("score");
     } catch (err: any) {
       setError(err?.response?.data?.message || "Something went wrong. Please try again.");
@@ -125,13 +124,10 @@ export default function AtsChecker() {
   return (
     <div style={{ background: "#09090f", minHeight: "100vh", color: "white", fontFamily: "'Inter',system-ui,sans-serif" }}>
 
-      {/* NAV */}
-      <Navbar />
-
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "56px 24px 80px" }}>
 
         {/* ── STEP: FORM ── */}
-        {(step === "form" || step === "loading") && (
+        {step === "form" && (
           <>
             <div style={{ textAlign: "center", marginBottom: 40 }}>
               <h1 style={{ fontSize: "clamp(28px,4.5vw,48px)", fontWeight: 900, letterSpacing: "-0.035em", lineHeight: 1.1, marginBottom: 12 }}>
@@ -198,13 +194,8 @@ export default function AtsChecker() {
 
               {error && <div style={errorBox}>{error}</div>}
 
-              <button onClick={handleAnalyze} disabled={step === "loading"} style={primaryBtn}>
-                {step === "loading" ? (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-                    <span style={spinner} />
-                    Analyzing with AI...
-                  </span>
-                ) : "Analyze My Resume →"}
+              <button onClick={handleAnalyze} style={primaryBtn} className="hover:scale-105 active:scale-95 transition-all">
+                Analyze My Resume →
               </button>
 
               <p style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.18)", marginTop: 12 }}>
@@ -212,6 +203,27 @@ export default function AtsChecker() {
               </p>
             </div>
           </>
+        )}
+
+        {/* ── STEP: LOADING ── */}
+        {step === "loading" && (
+          <div style={{ animation: "fadeUp 0.4s ease both", textAlign: "center" }}>
+            <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 32, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+              <span style={spinner} /> Analyzing Resume Match...
+            </h2>
+            <div style={{ ...card, position: "relative", overflow: "hidden", marginBottom: 20 }}>
+              <Skeleton className="h-32 w-32 rounded-full mx-auto mb-6 bg-muted/20" />
+              <Skeleton className="h-6 w-48 rounded-md mx-auto bg-muted/20" />
+            </div>
+            <div style={{ ...card, marginBottom: 20 }}>
+              <Skeleton className="h-6 w-32 rounded-md mb-4 bg-muted/20" />
+              <div className="space-y-3">
+                <Skeleton className="h-4 w-full rounded-md bg-muted/20" />
+                <Skeleton className="h-4 w-5/6 rounded-md bg-muted/20" />
+                <Skeleton className="h-4 w-4/6 rounded-md bg-muted/20" />
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ── STEP: SCORE & FULL REPORT ── */}
@@ -315,7 +327,7 @@ export default function AtsChecker() {
                 ...primaryBtn,
                 background: "linear-gradient(135deg, #6366f1, #a78bfa)",
                 boxShadow: "0 4px 20px rgba(99,102,241,0.25)"
-              }}>
+              }} className="hover:scale-105 active:scale-95 transition-all">
                 Practice this Job in AI Interview →
               </button>
               <button onClick={reset} style={{
@@ -323,7 +335,7 @@ export default function AtsChecker() {
                 marginTop: 12,
                 display: "block",
                 width: "100%"
-              }}>
+              }} className="hover:scale-105 active:scale-95 transition-all">
                 Analyze another resume
               </button>
             </div>
