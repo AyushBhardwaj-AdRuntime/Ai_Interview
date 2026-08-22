@@ -6,7 +6,9 @@ async function getResult(req, res) {
     const id = req.params.id;
     console.log("[Result] fetching interview:", id);
 
-    const userId = req.auth?.userId;
+    const { getAuth } = require("@clerk/express");
+    const auth = getAuth(req);
+    const userId = auth?.userId || req.auth?.userId || req.userId;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     const interview = await interviewModel.findOne({ _id: id, userId }, "interview.questions interview.result");

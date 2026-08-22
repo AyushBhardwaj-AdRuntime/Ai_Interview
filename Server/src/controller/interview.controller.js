@@ -1,10 +1,12 @@
 const interviewModel = require("../model/interview.model");
 const WebSocket = require("ws");
+const { getAuth } = require("@clerk/express");
 
 async function getInterview(req, res) {
   try {
     const { id } = req.params;
-    const userId = req.auth?.userId;
+    const auth = getAuth(req);
+    const userId = auth?.userId || req.auth?.userId || req.userId;
 
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
@@ -34,7 +36,8 @@ async function getInterview(req, res) {
 
 async function getMyInterviews(req, res) {
   try {
-    const userId = req.auth?.userId;
+    const auth = getAuth(req);
+    const userId = auth?.userId || req.auth?.userId || req.userId;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     const interviews = await interviewModel

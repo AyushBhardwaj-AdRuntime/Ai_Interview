@@ -4,10 +4,12 @@ const { parseResume } = require("../services/ai_service");
 const normalizeCandidateProfile = require("../services/profile.service")
 const resumeModel = require("../model/resume.model")
 const interviewModel = require("../model/interview.model")
+const { getAuth } = require("@clerk/express");
 
 async function preInterview(req, res) {
     try {
-        const userId = req.auth?.userId || req.userId;
+        const auth = getAuth(req);
+        const userId = auth?.userId || req.auth?.userId || req.userId;
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized: Missing user ID." });
         }

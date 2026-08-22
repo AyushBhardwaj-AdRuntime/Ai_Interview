@@ -87,7 +87,9 @@ async function atsAnalyzer(req, res) {
 }
 async function getAtsHistory(req, res) {
   try {
-    const userId = req.auth?.userId || req.userId;
+    const { getAuth } = require("@clerk/express");
+    const auth = getAuth(req);
+    const userId = auth?.userId || req.auth?.userId || req.userId;
     if (!userId || userId.startsWith("anonymous_")) {
       // Guests don't get history unless we want to track them by anonymous ID, but usually dashboard is logged in.
       return res.status(401).json({ message: "Must be logged in to view ATS history." });
