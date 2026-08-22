@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { useAuth } from "@clerk/clerk-react";
 import { useCreateInterview } from "@/hooks/useInterview";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import ResumeDropzone from "@/components/ui/ResumeDropzone";
-import { BACKEND_URL } from "@/lib/config";
 import { ArrowLeft, ArrowRight, Upload, Briefcase, Settings2, PlayCircle, FileText, Loader2 } from "lucide-react";
 
 const steps = [
@@ -29,7 +27,6 @@ const Form = () => {
   const [loading, setLoading] = useState(false);
   const navigation = useNavigate();
   const location = useLocation();
-  const { getToken } = useAuth();
 
   // Form State
   const [resume, setResume] = useState<File | null>(null);
@@ -75,7 +72,7 @@ const Form = () => {
     setStep((s) => Math.max(s - 1, 1));
   };
 
-  const { mutateAsync: createPreInterview, isPending: isLoadingInterview } = useCreateInterview();
+  const { mutateAsync: createPreInterview } = useCreateInterview();
 
   async function prepareInterview() {
     const formData = new FormData();

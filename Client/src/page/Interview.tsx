@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import type { Easing } from "framer-motion";
 import { Mic, PhoneOff, Pause, Play, Loader2 } from "lucide-react";
-
-import { BACKEND_URL, WS_URL } from "@/lib/config";
+import { WS_URL } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import MediaHandler from "@/Services/mediaHandler";
-
 import { useInterview } from "@/hooks/useInterview";
 
 type SessionState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'paused';
@@ -15,7 +14,7 @@ const Interview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { data: interview, error: queryError, refetch: fetchInterview, isLoading } = useInterview(id || '');
+  const { data: interview, error: queryError, refetch: fetchInterview } = useInterview(id || '');
 
   const [error, setError] = useState<string | null>(null);
   const [sessionState, setSessionState] = useState<SessionState>('idle');
@@ -23,8 +22,8 @@ const Interview = () => {
   
   const mediaRef = useRef(new MediaHandler());
   const socketRef = useRef<WebSocket | null>(null);
-  const speakingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const speakingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (queryError) {
@@ -44,7 +43,7 @@ const Interview = () => {
 
   // Timer logic
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (sessionState === 'listening' || sessionState === 'speaking') {
       interval = setInterval(() => setElapsed(e => e + 1), 1000);
     }
@@ -191,7 +190,7 @@ const Interview = () => {
     }
     if (sessionState === 'listening') {
       // Very soft, subtle animation for listening
-      return { height: [6, 12, 6], transition: { repeat: Infinity, duration: 2.5, delay: index * 0.2, ease: "easeInOut" } };
+      return { height: [6, 12, 6], transition: { repeat: Infinity, duration: 2.5, delay: index * 0.2, ease: 'easeInOut' as Easing } };
     }
     if (sessionState === 'speaking') {
       // Fast, animated waveform for AI speaking

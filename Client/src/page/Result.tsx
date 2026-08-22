@@ -1,5 +1,3 @@
-import { BACKEND_URL } from '@/lib/config';
-
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,17 +11,13 @@ import {
   MessageSquare,
   Wrench,
   Award,
-  Loader2,
   Target,
   PlayCircle
 } from 'lucide-react';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-
-import { useAuth } from '@clerk/clerk-react';
 import { useInterviewResult } from '@/hooks/useInterview';
 
 const loadingMessages = [
@@ -40,7 +34,7 @@ const Result = () => {
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (loading) {
       interval = setInterval(() => {
         setLoadingStep((prev) => (prev + 1) % loadingMessages.length);

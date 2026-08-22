@@ -1,24 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-
-import { useAuth, useUser } from '@clerk/clerk-react';
-import { BACKEND_URL } from '@/lib/config';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUser } from '@clerk/clerk-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Award, 
-  BarChart, 
-  Briefcase, 
-  Calendar, 
-  ChevronRight, 
-  History, 
-  TrendingUp,       
-  PlusCircle,
-  Loader2
+import {
+  Award,
+  BarChart,
+  Briefcase,
+  Calendar,
+  ChevronRight,
+  History,
+  TrendingUp,
+  PlusCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-
 import { useInterviewHistory } from '@/hooks/useInterview';
 import { useAtsHistory } from '@/hooks/useAts';
 
@@ -32,13 +28,16 @@ const Dashboard = () => {
   const loading = isLoadingInterviews || isLoadingAts;
   const error = (isErrorInterviews || isErrorAts) ? "Unable to load dashboard data." : "";
 
-  // Filter and sort interviews
+  // Filter and sort interviews — guard against non-array API responses (e.g. 500 error shape)
   const interviews = React.useMemo(() => {
+    if (!Array.isArray(rawInterviews)) return [];
     const completed = rawInterviews.filter((inv: any) => inv.interview?.status === 'completed' && inv.interview?.result?.overallScore);
     return completed.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [rawInterviews]);
 
-  const atsScans = rawAtsScans;
+  const atsScans = Array.isArray(rawAtsScans) ? rawAtsScans : [];
+
+
 
   if (loading) {
     return (

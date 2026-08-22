@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { BACKEND_URL } from "@/lib/config";
 import { Upload, ChevronRight, FileText, CheckCircle2, AlertTriangle, AlertCircle, Sparkles, PlusCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAtsAnalysis } from "@/hooks/useAts";
@@ -14,7 +13,7 @@ type RedFlag = {
   potentialScoreGain: string;
 };
 
-type FreeResult = {
+type AtsAnalysisResult = {
   score: number;
   matchStatus: "High" | "Medium" | "Low";
   criticalRedFlag: RedFlag | null;
@@ -74,7 +73,7 @@ export default function AtsChecker() {
   };
 
   // ── Step 1: submit form → API call ─────────────────────────────────────────
-  const { mutateAsync: analyzeResume, isPending } = useAtsAnalysis();
+  const { mutateAsync: analyzeResume } = useAtsAnalysis();
 
   const handleAnalyze = async () => {
     if (!resumeFile) { setError("Please upload your resume."); return; }
