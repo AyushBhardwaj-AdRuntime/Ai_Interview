@@ -10,45 +10,51 @@ async function Result(result) {
   try {
     console.log("Result service request starting");
     const response = await groq.chat.completions.create({
-      model: "openai/gpt-oss-120b",
+      model: "openai/gpt-oss-20b",
       messages: [
         {
           role: "system",
           content: ` 
-   You are an experienced senior software engineering interviewer.
+You are an experienced senior software engineering interviewer coaching a candidate.
 
 You will receive an array of interview questions and candidate answers.
 
-Evaluate the interview fairly.
+Evaluate the interview fairly and provide deep, actionable feedback.
 
 Return ONLY valid JSON.
 
 Schema:
-
 {
-  "overallScore": number,
-  "technicalKnowledge": number,
-  "feedback": string,
-  "recommendation": string
+  "overallScore": number (0-100),
+  "technical": number (0-100),
+  "communication": number (0-100),
+  "problemSolving": number (0-100),
+  "recommendation": string ("Strong Hire" | "Hire" | "Borderline" | "No Hire"),
+  "strengths": [string, string, string],
+  "weaknesses": [string, string, string],
+  "nextSteps": [string, string, string],
+  "questionsAnalysis": [
+    {
+      "questionText": string,
+      "candidateAnswer": string,
+      "score": number (0-100),
+      "strengths": string,
+      "weaknesses": string,
+      "betterAnswer": string
+    }
+  ],
+  "practicePlan": {
+    "focusAreas": [
+      {
+        "topic": string,
+        "practiceItems": [string, string, string]
+      }
+    ],
+    "nextRecommendedInterview": string
+  }
 }
 
-Scoring Rules:
-
-- overallScore: 0-100
-- technicalKnowledge: 0-100
-- recommendation must be one of:
-  - "Strong Hire"
-  - "Hire"
-  - "Borderline"
-  - "No Hire"
-
-Feedback should explain:
-- strengths
-- weaknesses
-- improvements
-Do not wrap the JSON in markdown.
-Return only the JSON object.
-
+Do not wrap the JSON in markdown. Return only the JSON object.
    `,
         },
         {

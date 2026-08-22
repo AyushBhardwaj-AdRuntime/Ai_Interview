@@ -1,13 +1,21 @@
-// const express = require("express")
-//  const   router = express.Router();
-// const multer = require("multer")
-//  const upload = multer({
-//   dest: "uploads/"
-// });
-//           router.post("/ats-analyze"  , upload.fields([
-//             {name : "resume" , maxCount : 1}, 
-//             {name : "jdFile" , maxCount : 1}
-//           ]), atsAnalyzer )
-          
+const express = require("express");
+const router = express.Router();
+const multer = require("multer");
+const { atsAnalyzer, getAtsHistory } = require("../controller/atsAnalyzer.controller");
+const { requireAuth } = require('@clerk/express');
 
-//           module.exports = router 
+const upload = multer({ dest: "uploads/" });
+
+// Accept: resume (PDF/DOCX file) + jdFile (optional PDF JD) + jdText (body field)
+router.post(
+  "/analyze",
+  upload.fields([
+    { name: "resume", maxCount: 1 },
+    { name: "jdFile", maxCount: 1 },
+  ]),
+  atsAnalyzer
+);
+
+router.get("/me", requireAuth(), getAtsHistory);
+
+module.exports = router;

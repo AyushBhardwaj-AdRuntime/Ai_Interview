@@ -3,8 +3,10 @@ const resumeSchema = new mongoose.Schema({
   userId : {
     type : mongoose.Schema.Types.ObjectId,
     ref : "User",
-    required : "true"
+    required : true,
+    unique: true,   // ✅ one resume per user — enforced at DB level
   },
+
    candidateProfile: {
    interviewSummary: {
  type : String ,

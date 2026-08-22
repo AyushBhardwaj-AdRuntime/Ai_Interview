@@ -6,10 +6,18 @@ async function getResult(req, res) {
     const id = req.params.id;
     console.log("[Result] fetching interview:", id);
 
-    const interview = await interviewModel.findById(id, "interview.questions");
+    const userId = req.auth?.userId;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const interview = await interviewModel.findOne({ _id: id, userId }, "interview.questions interview.result");
 
     if (!interview) {
-      return res.status(404).json({ message: "Interview not found" });
+      return res.status(404).json({ message: "Interview not found or unauthorized" });
+    }
+
+    // If result already exists, return it to avoid re-evaluating
+    if (interview.interview?.result && interview.interview.result.overallScore) {
+      return res.status(200).json(interview.interview.result);
     }
 
     const questions = interview.interview.questions;

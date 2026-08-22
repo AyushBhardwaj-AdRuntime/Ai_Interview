@@ -5,6 +5,7 @@ import { useAuth, useUser } from '@clerk/clerk-react';
 import { BACKEND_URL } from '@/lib/config';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Navbar from '@/components/layout/Navbar';
 import { 
   Award, 
   BarChart, 
@@ -12,7 +13,7 @@ import {
   Calendar, 
   ChevronRight, 
   History, 
-  TrendingUp, 
+  TrendingUp,       
   PlusCircle,
   Loader2
 } from 'lucide-react';
@@ -22,41 +23,60 @@ const Dashboard = () => {
   const { getToken } = useAuth();
   const { user } = useUser();
   const [interviews, setInterviews] = useState<any[]>([]);
+  const [atsScans, setAtsScans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState<'interviews' | 'ats'>('interviews');
 
   useEffect(() => {
-    async function fetchInterviews() {
+    async function fetchData() {
       try {
         const token = await getToken();
-        // Fallback for demo purposes if token fails locally without valid keys
-        const response = await axios.get(`${BACKEND_URL}/api/v1/interviews/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
         
-        // Filter out those without result yet
-        const completed = response.data.filter((inv: any) => inv.interview?.status === 'completed' && inv.interview?.result?.overallScore);
+        const [interviewsRes, atsRes] = await Promise.allSettled([
+          axios.get(`${BACKEND_URL}/api/v1/interviews/me`, { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get(`${BACKEND_URL}/api/v1/ats/me`, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
         
-        // Sort by date descending
-        completed.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setInterviews(completed);
-      } catch (error) {
-        console.error("Failed to fetch interviews", error);
+        if (interviewsRes.status === 'fulfilled') {
+          const completed = interviewsRes.value.data.filter((inv: any) => inv.interview?.status === 'completed' && inv.interview?.result?.overallScore);
+          completed.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          setInterviews(completed);
+        }
+
+        if (atsRes.status === 'fulfilled') {
+          setAtsScans(atsRes.value.data);
+        } else {
+          console.error("Failed to load ATS history", atsRes.reason);
+        }
+
+      } catch (err) {
+        console.error("Failed to fetch dashboard data", err);
+        setError("Unable to load dashboard data.");
       } finally {
         setLoading(false);
       }
     }
 
     if (user) {
-      fetchInterviews();
+      fetchData();
     }
   }, [getToken, user]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-muted-foreground animate-pulse">Loading your dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground gap-4">
+        <p className="text-destructive font-medium">{error}</p>
+        <Button onClick={() => window.location.reload()} variant="outline">Retry</Button>
       </div>
     );
   }
@@ -95,8 +115,9 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6 md:p-12 font-sans selection:bg-primary/20 pb-24">
-      <div className="mx-auto max-w-6xl space-y-10">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 pb-24">
+      <Navbar />
+      <div className="mx-auto max-w-6xl space-y-10 p-6 md:p-12 pt-24 md:pt-32">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -158,56 +179,125 @@ const Dashboard = () => {
           </Card>
         </div>
 
+        {/* Tabs for Navigation */}
+        <div className="flex items-center gap-4 border-b border-border mb-6">
+          <button
+            onClick={() => setActiveTab('interviews')}
+            className={`pb-4 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'interviews' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+          >
+            Interview History
+          </button>
+          <button
+            onClick={() => setActiveTab('ats')}
+            className={`pb-4 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'ats' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+          >
+            ATS History
+          </button>
+        </div>
+
         {/* Two Column Layout for History & Progress */}
         <div className="grid lg:grid-cols-3 gap-8">
           
-          {/* Recent Interviews */}
+          {/* Main Feed */}
           <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
-              <History className="w-5 h-5 text-muted-foreground" />
-              Recent Interviews
-            </h2>
             
-            {interviews.length === 0 ? (
-              <Card className="border-dashed border-2 bg-muted/20 shadow-none h-48 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <Briefcase className="w-6 h-6 text-muted-foreground" />
-                </div>
-                <p className="font-medium text-foreground">No completed interviews yet.</p>
-                <p className="text-sm text-muted-foreground mb-4">Take your first mock interview to see stats.</p>
-                <Link to="/setup">
-                  <Button variant="outline" size="sm">Start Practice</Button>
-                </Link>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {interviews.map((inv: any) => (
-                  <Link to={`/result/${inv._id}`} key={inv._id}>
-                    <Card className="bg-card border-border shadow-sm rounded-2xl hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group">
-                      <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                            <span className="text-xl font-black text-foreground">{inv.interview.result.overallScore}</span>
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">{inv.job_title || "Mock Interview"}</h3>
-                            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {inv.company || "General"}</span>
-                              <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(inv.createdAt).toLocaleDateString()}</span>
+            {activeTab === 'interviews' && (
+              <>
+                <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
+                  <History className="w-5 h-5 text-muted-foreground" />
+                  Recent Interviews
+                </h2>
+                
+                {interviews.length === 0 ? (
+                  <Card className="border-dashed border-2 bg-muted/20 shadow-none h-48 flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                      <Briefcase className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <p className="font-medium text-foreground">No completed interviews yet.</p>
+                    <p className="text-sm text-muted-foreground mb-4">Take your first mock interview to see stats.</p>
+                    <Link to="/setup">
+                      <Button variant="outline" size="sm">Start Practice</Button>
+                    </Link>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {interviews.map((inv: any) => (
+                      <Link to={`/result/${inv._id}`} key={inv._id}>
+                        <Card className="bg-card border-border shadow-sm rounded-2xl hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group">
+                          <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                                <span className="text-xl font-black text-foreground">{inv.interview.result.overallScore}</span>
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">{inv.job_title || "Mock Interview"}</h3>
+                                <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                                  <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {inv.company || "General"}</span>
+                                  <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(inv.createdAt).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 w-full sm:w-auto justify-end mt-2 sm:mt-0">
+                              <Badge className={`${getBadgeColor(inv.interview.result.recommendation)} text-white`}>
+                                {inv.interview.result.recommendation || "Completed"}
+                              </Badge>
+                              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {activeTab === 'ats' && (
+              <>
+                <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
+                  <History className="w-5 h-5 text-muted-foreground" />
+                  ATS Scan History
+                </h2>
+                
+                {atsScans.length === 0 ? (
+                  <Card className="border-dashed border-2 bg-muted/20 shadow-none h-48 flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                      <BarChart className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <p className="font-medium text-foreground">No ATS scans yet.</p>
+                    <p className="text-sm text-muted-foreground mb-4">Analyze your first resume to see how you match against a job description.</p>
+                    <Link to="/ats">
+                      <Button variant="outline" size="sm">Try ATS Analyzer</Button>
+                    </Link>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {atsScans.map((scan: any) => (
+                      <Card key={scan._id} className="bg-card border-border shadow-sm rounded-2xl hover:border-primary/50 transition-all cursor-default">
+                        <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                              <span className="text-xl font-black text-foreground">{scan.score}</span>
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-lg text-foreground line-clamp-1">{scan.resumeName || "Resume Scan"}</h3>
+                              <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1.5"><Award className="w-4 h-4" /> {scan.matchStatus} Match</span>
+                                <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(scan.createdAt).toLocaleDateString()}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-4 w-full sm:w-auto justify-end mt-2 sm:mt-0">
-                          <Badge className={`${getBadgeColor(inv.interview.result.recommendation)} text-white`}>
-                            {inv.interview.result.recommendation || "Completed"}
-                          </Badge>
-                          <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
+                          <div className="flex items-center gap-4 w-full sm:w-auto justify-end mt-2 sm:mt-0">
+                            <Link to="/setup" state={{ jdText: scan.jdSnippet }}>
+                              <Button variant="ghost" size="sm">Practice this Job</Button>
+                            </Link>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -225,7 +315,7 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   <div className="space-y-6 relative before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-muted before:to-transparent">
-                    {/* Reverse array to show chronological order bottom to top visually, or just map as is */}
+                    {/* Reverse array to show chronological order bottom to top visually */}
                     {[...interviews].reverse().map((inv: any, i: number, arr: any[]) => {
                       const prevScore = i > 0 ? arr[i - 1].interview.result.overallScore : null;
                       const currScore = inv.interview.result.overallScore;

@@ -2,13 +2,21 @@ const mongoose = require("mongoose");
 
 const interviewSchema = new mongoose.Schema({
  
-     
-     
+    userId: {
+        type: String,
+        required: true
+    },
     resumeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Resume",
     required: true
 },
+    jobTitle: { type: String, default: "" },
+    company: { type: String, default: "" },
+    jobDescription: { type: String, default: "" },
+    interviewType: { type: String, default: "Technical" },
+    difficulty: { type: String, default: "Medium" },
+    experience: { type: String, default: "1-3 years" },
     interview: {
 
         status: {
@@ -34,26 +42,9 @@ const interviewSchema = new mongoose.Schema({
     default: []
 },
         result: {
-             overallScore: {
-            type : Number ,
-           default : 0 
-                 
-             },
-              technicalKnowledge: {
-            type : Number ,
-           default : 0 
-                 
-             },
-             feedback : {
-            type : String,
-           default : ""
-                 
-             },
-          recommendation: {
-            type : String,
-                 default : ""
-             },
-              },
+            type: mongoose.Schema.Types.Mixed,
+            default: {}
+        },
 
    
 

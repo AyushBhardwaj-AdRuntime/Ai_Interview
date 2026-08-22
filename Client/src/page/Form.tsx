@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/clerk-react";
@@ -16,6 +16,7 @@ import {
 import ResumeDropzone from "@/components/ui/ResumeDropzone";
 import { BACKEND_URL } from "@/lib/config";
 import { ArrowLeft, ArrowRight, Upload, Briefcase, Settings2, PlayCircle, FileText, Loader2 } from "lucide-react";
+import Navbar from "@/components/layout/Navbar";
 
 const steps = [
   { id: 1, name: "Resume", icon: Upload },
@@ -28,10 +29,12 @@ const Form = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigate();
+  const location = useLocation();
   const { getToken } = useAuth();
 
   // Form State
   const [resume, setResume] = useState<File | null>(null);
+  const [resumeFromAts, setResumeFromAts] = useState(false);
   const [jobTitle, setJobTitle] = useState("");
   const [company, setCompany] = useState("");
   const [jobDescription, setJobDescription] = useState("");
@@ -40,10 +43,18 @@ const Form = () => {
   const [experience, setExperience] = useState("1-3 years");
 
   const [interviewId, setInterviewId] = useState<string | null>(null);
-  const [atsAnalysis, setAtsAnalysis] = useState<any>(null);
+
+  useEffect(() => {
+    if (location.state?.jdText) {
+      setJobDescription(location.state.jdText);
+      setResumeFromAts(true);
+      // We don't advance the step automatically so the user has a moment to review
+      toast.success("Resume & Job Description loaded from ATS! You can review before starting.", { duration: 5000 });
+    }
+  }, [location.state]);
 
   const handleNext = async () => {
-    if (step === 1 && !resume) {
+    if (step === 1 && !resume && !resumeFromAts) {
       toast.error("Please upload a resume to continue.");
       return;
     }
@@ -86,7 +97,6 @@ const Form = () => {
       });
       
       setInterviewId(response.data.id);
-      setAtsAnalysis(response.data.interview?.atsAnalysis);
       toast.success("Interview prepared successfully!");
       setStep(4);
     } catch (err) {
@@ -106,14 +116,9 @@ const Form = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pt-24">
       {/* Navbar Minimal */}
-      <nav className="absolute top-0 w-full h-16 flex items-center px-6">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl">M</div>
-          <span className="font-bold text-xl tracking-tight text-foreground">MockHire</span>
-        </Link>
-      </nav>
+      <Navbar />
 
       <div className="w-full max-w-2xl">
         {/* Progress Tracker */}
@@ -159,7 +164,13 @@ const Form = () => {
                     {resume && (
                       <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 rounded-md border border-green-200 dark:border-green-900">
                         <FileText className="w-4 h-4" />
-                        <span className="text-sm font-medium">Resume uploaded successfully</span>
+                        <span className="text-sm font-medium">New resume uploaded successfully</span>
+                      </div>
+                    )}
+                    {!resume && resumeFromAts && (
+                      <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 rounded-md border border-blue-200 dark:border-blue-900">
+                        <FileText className="w-4 h-4" />
+                        <span className="text-sm font-medium">Using your saved resume from ATS. You can upload a new one to replace it, or just click Next.</span>
                       </div>
                     )}
                   </CardContent>
@@ -291,26 +302,6 @@ const Form = () => {
                         </div>
                       </div>
                       
-                      {atsAnalysis && (
-                        <div className="mt-4 pt-4 border-t border-border">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium">ATS Match Score</span>
-                            <span className={`font-bold ${atsAnalysis.score >= 70 ? 'text-green-600' : atsAnalysis.score >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>{atsAnalysis.score}%</span>
-                          </div>
-                          {atsAnalysis.missingKeywords && atsAnalysis.missingKeywords.length > 0 && (
-                            <div className="mt-3">
-                              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Areas we'll focus on:</span>
-                              <div className="flex flex-wrap gap-1.5">
-                                {atsAnalysis.missingKeywords.slice(0, 5).map((kw: string, i: number) => (
-                                  <span key={i} className="px-2 py-0.5 text-xs bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border border-red-200 dark:border-red-900 rounded-md">
-                                    {kw}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </>

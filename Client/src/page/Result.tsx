@@ -3,6 +3,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import Navbar from '@/components/layout/Navbar';
 import {
   CheckCircle2,
   XCircle,
@@ -13,7 +14,9 @@ import {
   MessageSquare,
   Wrench,
   Award,
-  Loader2
+  Loader2,
+  Target,
+  PlayCircle
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -132,8 +135,9 @@ const Result = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6 md:p-12 font-sans selection:bg-primary/20">
-      <div className="mx-auto max-w-5xl space-y-12">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
+      <Navbar />
+      <div className="mx-auto max-w-5xl space-y-12 p-6 md:p-12 pt-24 md:pt-32">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-card border border-border p-8 rounded-[2rem] shadow-sm">
@@ -168,6 +172,50 @@ const Result = () => {
             <FeedbackList title="What you did well" items={result.strengths} icon={<CheckCircle2 className="w-5 h-5 text-green-500" />} />
             <FeedbackList title="What went wrong" items={result.weaknesses} icon={<XCircle className="w-5 h-5 text-destructive" />} />
             <FeedbackList title="Practice Next" items={result.nextSteps} icon={<ArrowRightCircle className="w-5 h-5 text-blue-500" />} />
+          </div>
+        )}
+
+        {/* Personalized Practice Plan */}
+        {result.practicePlan && result.practicePlan.focusAreas && result.practicePlan.focusAreas.length > 0 && (
+          <div className="bg-slate-50 border border-slate-200 p-8 rounded-3xl shadow-sm my-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-coral-100 p-2 rounded-full">
+                <Target className="w-6 h-6 text-coral-600" style={{ color: '#ff7f50' }} />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Your Personalized Practice Plan</h2>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {result.practicePlan.focusAreas.map((area: any, idx: number) => (
+                <div key={idx} className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm">
+                  <h3 className="font-bold text-lg text-slate-800 mb-4 pb-2 border-b border-slate-100">
+                    Focus {idx + 1}: {area.topic}
+                  </h3>
+                  <ul className="space-y-3">
+                    {area.practiceItems?.map((item: string, i: number) => (
+                      <li key={i} className="flex items-start gap-3 text-sm text-slate-600">
+                        <ArrowRightCircle className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            {result.practicePlan.nextRecommendedInterview && (
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
+                <div>
+                  <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Next Recommended Interview</p>
+                  <p className="text-xl font-semibold text-slate-800">{result.practicePlan.nextRecommendedInterview}</p>
+                </div>
+                <Link to="/setup">
+                  <Button className="shrink-0 bg-slate-800 hover:bg-slate-900 text-white rounded-full px-8 py-6 shadow-md transition-all hover:scale-105">
+                    Start Recommended Practice <PlayCircle className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         )}
 

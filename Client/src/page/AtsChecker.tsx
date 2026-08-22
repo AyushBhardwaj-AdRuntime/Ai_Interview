@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BACKEND_URL } from "@/lib/config";
+import { Upload, ChevronRight, FileText, CheckCircle2, AlertTriangle, AlertCircle, Sparkles, PlusCircle } from "lucide-react";
+import Navbar from "@/components/layout/Navbar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Step = "form" | "loading" | "score" | "questions" | "analyzing" | "paywall";
@@ -56,9 +58,7 @@ export default function AtsChecker() {
   const [error, setError] = useState("");
 
   // result state
-  const [result, setResult] = useState<FreeResult | null>(null);
-  const [answers, setAnswers] = useState(["", ""]);
-  const [weakness, setWeakness] = useState("");
+  const [result, setResult] = useState<any>(null);
 
   // ── File handling ──────────────────────────────────────────────────────────
   const handleFile = (file: File) => {
@@ -99,28 +99,14 @@ export default function AtsChecker() {
     }
   };
 
-  // ── Step 2: user clicks continue from score ────────────────────────────────
-  const handleSeeQuestions = () => setStep("questions");
-
-  // ── Step 3: user submits answers ──────────────────────────────────────────
-  const handleSubmitAnswers = () => {
-    if (!answers[0].trim() || !answers[1].trim()) {
-      setError("Please answer both questions before continuing.");
-      return;
-    }
-    setError("");
-    setStep("analyzing");
-
-    // Simulate analysis (1.8s) then show weakness + paywall
-    setTimeout(() => {
-      const flag = result?.criticalRedFlag;
-      setWeakness(
-        flag?.skill
-          ? `Your answers show a gap in ${flag.skill}. ${flag.reason}`
-          : "Your answers reveal areas that interviewers will push on in a real screening."
-      );
-      setStep("paywall");
-    }, 1800);
+  const handlePracticeJob = () => {
+    navigate("/setup", {
+      state: {
+        jdText,
+        // The backend uses the logged-in user's latest resume, so we don't strictly need resumeId,
+        // but we can pass it if we add it to the AtsResult response later.
+      }
+    });
   };
 
   const reset = () => {
@@ -130,7 +116,6 @@ export default function AtsChecker() {
     setJdText("");
     setError("");
     setResult(null);
-    setAnswers(["", ""]);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -141,42 +126,7 @@ export default function AtsChecker() {
     <div style={{ background: "#09090f", minHeight: "100vh", color: "white", fontFamily: "'Inter',system-ui,sans-serif" }}>
 
       {/* NAV */}
-      <nav style={{
-        position: "sticky", top: 0, zIndex: 50,
-        background: "rgba(9,9,15,0.85)", backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-      }}>
-        <div style={{
-          maxWidth: 860, margin: "0 auto", padding: "0 24px",
-          height: 60, display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <span onClick={() => navigate("/")} style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.03em", cursor: "pointer" }}>
-            mock<span style={{ background: "linear-gradient(135deg,#6366f1,#a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>hire</span>
-            <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 13 }}>.me</span>
-          </span>
-
-          {/* Step indicator */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {(["form", "score", "questions", "paywall"] as const).map((s, i) => (
-              <div key={s} style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: ["form", "loading"].includes(step) && i === 0 ? "#6366f1"
-                  : step === "score" && i === 1 ? "#6366f1"
-                  : ["questions", "analyzing"].includes(step) && i === 2 ? "#6366f1"
-                  : step === "paywall" && i === 3 ? "#6366f1"
-                  : "rgba(255,255,255,0.12)",
-                transition: "background 0.3s",
-              }} />
-            ))}
-          </div>
-
-          <span style={{
-            fontSize: 11, fontWeight: 700, color: "#10b981",
-            background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)",
-            borderRadius: 999, padding: "4px 12px",
-          }}>FREE</span>
-        </div>
-      </nav>
+      <Navbar />
 
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "56px 24px 80px" }}>
 
@@ -264,7 +214,7 @@ export default function AtsChecker() {
           </>
         )}
 
-        {/* ── STEP: SCORE ── */}
+        {/* ── STEP: SCORE & FULL REPORT ── */}
         {step === "score" && result && (
           <div style={{ animation: "fadeUp 0.4s ease both" }}>
             <div style={{ textAlign: "center", marginBottom: 10 }}>
@@ -306,6 +256,36 @@ export default function AtsChecker() {
               </p>
             </div>
 
+            {/* Feedback & Keywords */}
+            <div style={{ ...card, marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Overall Feedback</h3>
+              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, marginBottom: 20 }}>{result.feedback}</p>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {result.missingKeywords && result.missingKeywords.length > 0 && (
+                  <div>
+                    <h4 style={{ fontSize: 13, fontWeight: 600, color: "#f87171", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Missing Keywords</h4>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {result.missingKeywords.map((kw: string, i: number) => (
+                        <span key={i} style={{ fontSize: 12, background: "rgba(239,68,68,0.1)", color: "#fca5a5", padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(239,68,68,0.2)" }}>{kw}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {result.matchingKeywords && result.matchingKeywords.length > 0 && (
+                  <div>
+                    <h4 style={{ fontSize: 13, fontWeight: 600, color: "#34d399", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Matching Keywords</h4>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {result.matchingKeywords.map((kw: string, i: number) => (
+                        <span key={i} style={{ fontSize: 12, background: "rgba(16,185,129,0.1)", color: "#6ee7b7", padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(16,185,129,0.2)" }}>{kw}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Critical red flag */}
             {result.criticalRedFlag && (
               <div style={{
@@ -324,147 +304,28 @@ export default function AtsChecker() {
                     <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.65, marginBottom: 10 }}>
                       {result.criticalRedFlag.reason}
                     </p>
-                    <div style={{
-                      display: "inline-flex", alignItems: "center", gap: 6,
-                      background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)",
-                      borderRadius: 999, padding: "4px 12px",
-                    }}>
-                      <span style={{ fontSize: 12, color: "#818cf8", fontWeight: 700 }}>
-                        Potential improvement: {result.criticalRedFlag.potentialScoreGain}
-                      </span>
-                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            <button onClick={handleSeeQuestions} style={primaryBtn}>
-              See Your Personalized Interview Questions →
-            </button>
-            <p style={{ textAlign: "center", fontSize: 12, color: "rgba(255,255,255,0.2)", marginTop: 10 }}>
-              2 questions · based on your resume gaps · free
-            </p>
-          </div>
-        )}
-
-        {/* ── STEP: QUESTIONS ── */}
-        {(step === "questions" || step === "analyzing") && result && (
-          <div style={{ animation: "fadeUp 0.4s ease both" }}>
-            <div style={{ textAlign: "center", marginBottom: 32 }}>
-              <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-0.025em", marginBottom: 8 }}>
-                Answer these 2 questions
-              </h2>
-              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.35)" }}>
-                Based on your resume gaps — these are the questions that will expose you in a real interview.
-              </p>
-            </div>
-
-            {result.teaserQuestions.map((q, i) => (
-              <div key={i} style={{ ...card, marginBottom: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  <span style={{
-                    fontSize: 11, fontWeight: 800, color: "#818cf8", fontFamily: "monospace",
-                    background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.22)",
-                    borderRadius: 6, padding: "2px 8px", flexShrink: 0,
-                  }}>Q{i + 1}</span>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,0.9)", lineHeight: 1.5 }}>{q}</p>
-                </div>
-                <textarea
-                  value={answers[i]}
-                  onChange={e => {
-                    const a = [...answers];
-                    a[i] = e.target.value;
-                    setAnswers(a);
-                  }}
-                  disabled={step === "analyzing"}
-                  placeholder="Type your answer here..."
-                  rows={4}
-                  style={{
-                    width: "100%", boxSizing: "border-box", resize: "vertical",
-                    background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.09)",
-                    borderRadius: 10, padding: "12px 14px", fontSize: 14, lineHeight: 1.65,
-                    color: "rgba(255,255,255,0.75)", outline: "none", fontFamily: "inherit",
-                    opacity: step === "analyzing" ? 0.5 : 1, transition: "border-color 0.2s",
-                  }}
-                  onFocus={e => (e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)")}
-                  onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)")}
-                />
-              </div>
-            ))}
-
-            {error && <div style={errorBox}>{error}</div>}
-
-            <button onClick={handleSubmitAnswers} disabled={step === "analyzing"} style={primaryBtn}>
-              {step === "analyzing" ? (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-                  <span style={spinner} />
-                  AI is analyzing your answers...
-                </span>
-              ) : "Submit Answers →"}
-            </button>
-          </div>
-        )}
-
-        {/* ── STEP: PAYWALL ── */}
-        {step === "paywall" && result && (
-          <div style={{ animation: "fadeUp 0.4s ease both" }}>
-
-            {/* Weakness revealed */}
-            <div style={{
-              ...card, marginBottom: 20, textAlign: "center",
-              borderColor: "rgba(251,191,36,0.25)", background: "rgba(251,191,36,0.04)",
-            }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#fbbf24", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 10 }}>
-                Weakness Detected
-              </p>
-              <p style={{ fontSize: 16, fontWeight: 700, color: "white", marginBottom: 8, lineHeight: 1.5 }}>
-                Your answer was analyzed.
-              </p>
-              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, maxWidth: 440, margin: "0 auto" }}>
-                {weakness}
-              </p>
-            </div>
-
-            {/* What's locked */}
-            <div style={{ ...card, marginBottom: 20 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 16 }}>
-                Locked — Unlock for ₹49
-              </p>
-              {[
-                { icon: "📊", text: "Full keyword analysis — every missing skill with fix instructions" },
-                { icon: "💡", text: "Line-by-line resume improvement suggestions" },
-                { icon: "🎯", text: "Interview risk areas — what interviewers will push on" },
-                { icon: "🎙️", text: "Full 6-question AI voice interview with real-time feedback" },
-                { icon: "📈", text: "Interview readiness score + estimated pass-readiness" },
-                { icon: "🗺️", text: "Personalized improvement plan" },
-              ].map((item, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                  <span style={{ fontSize: 16 }}>{item.icon}</span>
-                  <span style={{ fontSize: 14, color: "rgba(255,255,255,0.5)" }}>{item.text}</span>
-                  <span style={{ marginLeft: "auto", fontSize: 16 }}>🔒</span>
-                </div>
-              ))}
-            </div>
-
-            {/* CTA */}
-            <div style={{ textAlign: "center" }}>
-              <button style={{
+            {/* Practice Handoff CTA */}
+            <div style={{ textAlign: "center", marginTop: 32 }}>
+              <button onClick={handlePracticeJob} style={{
                 ...primaryBtn,
-                fontSize: 16, padding: "16px 0",
-                background: "linear-gradient(135deg,#f59e0b,#ef4444)",
-                boxShadow: "0 0 32px rgba(245,158,11,0.3)",
+                background: "linear-gradient(135deg, #6366f1, #a78bfa)",
+                boxShadow: "0 4px 20px rgba(99,102,241,0.25)"
               }}>
-                Unlock Full Report — ₹49 →
+                Practice this Job in AI Interview →
               </button>
-              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 10 }}>
-                Payment coming soon · Join waitlist to be notified
-              </p>
-
-              <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-                <button onClick={reset} style={{ ...secondaryBtn, flex: 1 }}>← Try Another Resume</button>
-                <button onClick={() => navigate("/")} style={{ ...secondaryBtn, flex: 1 }}>Practice AI Interview</button>
-              </div>
+              <button onClick={reset} style={{
+                ...secondaryBtn,
+                marginTop: 12,
+                display: "block",
+                width: "100%"
+              }}>
+                Analyze another resume
+              </button>
             </div>
           </div>
         )}

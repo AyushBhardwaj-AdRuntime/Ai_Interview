@@ -14,9 +14,17 @@ function setupInterviewSocket(wss) {
     const interviewSummary = interviewDoc?.resumeId?.candidateProfile?.interviewSummary || "";
     console.log("[WS] interviewSummary loaded:", interviewSummary ? interviewSummary.slice(0, 80) + "..." : "⚠️  EMPTY — resume may not have parsed correctly");
 
+    const jobConfig = {
+      jobTitle: interviewDoc?.jobTitle || "",
+      company: interviewDoc?.company || "",
+      interviewType: interviewDoc?.interviewType || "Technical",
+      difficulty: interviewDoc?.difficulty || "Medium",
+      experience: interviewDoc?.experience || "1-3 years"
+    };
+
     const gemini = new GeminiLive();
 
-    await gemini.connect(buildSystemPrompt(interviewSummary));
+    await gemini.connect(buildSystemPrompt(interviewSummary, jobConfig));
 
     const state = new InterviewState(id);
     gemini.onMessage = async (message) => {
@@ -112,12 +120,23 @@ module.exports = setupInterviewSocket;
 // Builds the full system prompt that is injected into Gemini Live
 // via the systemInstruction config field (NOT as a chat message).
 // This is the correct way to give Gemini its role and context.
-function buildSystemPrompt(interviewSummary) {
+// Builds the full system prompt that is injected into Gemini Live
+// via the systemInstruction config field (NOT as a chat message).
+// This is the correct way to give Gemini its role and context.
+function buildSystemPrompt(interviewSummary, jobConfig) {
+  const companyContext = jobConfig.company ? ` at ${jobConfig.company}` : "";
+  const roleContext = jobConfig.jobTitle ? `for the role of ${jobConfig.jobTitle}${companyContext}` : "for a software engineering position";
+
   return [
-    "You are an experienced HR interviewer conducting a real mock interview.",
+    `You are an experienced HR and Technical interviewer conducting a realistic mock interview ${roleContext}.`,
     "Your job is ONLY to conduct the interview.",
     "",
-    "Candidate Summary:",
+    "Job & Interview Context:",
+    `- Interview Type: ${jobConfig.interviewType}`,
+    `- Difficulty Level: ${jobConfig.difficulty}`,
+    `- Candidate Experience Level: ${jobConfig.experience}`,
+    "",
+    "Candidate Summary (from their resume):",
     interviewSummary
       ? interviewSummary
       : "No resume data provided. Ask general software engineering interview questions.",
@@ -127,10 +146,9 @@ function buildSystemPrompt(interviewSummary) {
     "- This interview contains exactly 6 questions.",
     "- Ask only ONE question at a time.",
     "- Wait until the candidate finishes speaking before asking the next question.",
-    "- Base every question on the Candidate Summary above.",
+    "- Base every question on the Candidate Summary and the Job & Interview Context provided.",
     "- Start with: Tell me about yourself.",
-    "- Gradually increase difficulty.",
-    "- Cover: background, skills, experience, projects, tech stack, problem-solving.",
+    "- Gradually increase difficulty up to the specified Difficulty Level.",
     "- Ask follow-up questions when an answer is vague or interesting.",
     "- Never reveal answers. Never become a general chatbot.",
     "- If the candidate says something unrelated, politely redirect them.",
@@ -138,5 +156,5 @@ function buildSystemPrompt(interviewSummary) {
     "- Maintain a professional but friendly tone.",
     "- After the sixth question, thank the candidate and say the interview has ended.",
     "- Do NOT generate a score or feedback during the interview.",
-  ].join("\n");
+  ].filter(line => line !== "").join("\n");
 }

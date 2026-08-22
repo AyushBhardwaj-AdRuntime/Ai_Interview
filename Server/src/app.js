@@ -5,14 +5,14 @@ const app = express()
 const  connectDb = require("../src/db/db")
 const cors = require("cors")
 const  InterviewRoute = require("./routes/interview.routes")
-// const atsRoute = require("./routes/atsRoute"); // ⏳ not ready yet — route file is fully commented out
+const atsRoute = require("./routes/atsRoute");
 const cookieParser = require("cookie-parser");
-const anonymousMiddleware = require("./middleware/anonymous.middleware");
+const { clerkMiddleware, requireAuth } = require('@clerk/express');
 
 app.use(cors({
     origin: [
         "http://localhost:5173",
-        "http://localhost:5174",   // ✅ Vite fallback port
+        "http://localhost:5174",
         "https://mockhire.me",
         "https://www.mockhire.me"
     ],
@@ -21,7 +21,16 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json())
 connectDb()
-// app.use("/api/v1", anonymousMiddleware, atsRoute); // ⏳ enable when atsRoute is implemented
-app.use("/api/v1", anonymousMiddleware, InterviewRoute);
+
+const anonymousMiddleware = require("./middleware/anonymous.middleware");
+
+// Add Clerk middleware to parse the auth state for other routes
+app.use(clerkMiddleware());
+
+// Secure the routes
+// ATS route remains accessible for guests via anonymous session
+app.use("/api/v1/ats", anonymousMiddleware, atsRoute);
+app.use("/api/v1", requireAuth(), InterviewRoute);
+
 module.exports = app 
 

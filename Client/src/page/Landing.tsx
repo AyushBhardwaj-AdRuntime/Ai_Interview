@@ -2,43 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Target, Briefcase, Mic, CheckCircle2, BarChart } from "lucide-react";
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import Navbar from "@/components/layout/Navbar";
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-x-hidden font-sans">
       
       {/* NAVBAR */}
-      <nav className="fixed top-0 w-full bg-background/90 backdrop-blur-md z-50 border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl">M</div>
-            <span className="font-bold text-xl tracking-tight text-foreground">MockHire</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-            <a href="#product" className="hover:text-foreground transition-colors">Product</a>
-            <a href="#how-it-works" className="hover:text-foreground transition-colors">How it works</a>
-            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-          </div>
-          <div className="flex items-center gap-4">
-            <SignedOut>
-              <SignInButton mode="modal">
-                <Button variant="ghost" className="hidden sm:inline-flex">Log in</Button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">Get Started</Button>
-              </SignUpButton>
-            </SignedOut>
-            <SignedIn>
-              <Link to="/dashboard">
-                <Button variant="outline" className="hidden sm:inline-flex rounded-full">Dashboard</Button>
-              </Link>
-              <Link to="/setup">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-6">New Interview</Button>
-              </Link>
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="pt-28 pb-12">
         {/* HERO */}
@@ -56,13 +26,20 @@ export default function Landing() {
             Upload your resume, add a job description, and take a realistic AI interview. Find your weaknesses and improve before the real thing.
           </p>
           
-          <div className="flex flex-col items-center justify-center gap-2 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-            <Link to="/setup" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 rounded-full text-lg shadow-sm shadow-primary/20 transition-all hover:scale-[1.02]">
-                Start Your Interview <ArrowRight className="ml-2 w-5 h-5" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+            <Link to="/ats" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 rounded-full text-lg shadow-sm transition-all hover:scale-[1.02] border-primary text-primary hover:bg-primary/5">
+                ATS Analyzer
               </Button>
             </Link>
-            <span className="text-sm text-muted-foreground mt-1 font-medium">Free to try · No credit card required</span>
+            <Link to="/setup" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 rounded-full text-lg shadow-sm shadow-primary/20 transition-all hover:scale-[1.02]">
+                Start AI Interview <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+          <div className="mt-2 text-sm text-muted-foreground font-medium animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
+            Free to try · No credit card required
           </div>
 
           <div className="mt-12 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500">
@@ -244,8 +221,8 @@ export default function Landing() {
             <div>
               <h4 className="font-semibold text-foreground mb-3 text-sm">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/setup" className="hover:text-primary transition-colors">Start Interview</Link></li>
-                <li><Link to="#" className="hover:text-primary transition-colors">ATS Checker</Link></li>
+                <li><Link to="/setup" className="hover:text-primary transition-colors">AI Interview</Link></li>
+                <li><Link to="/ats" className="hover:text-primary transition-colors">ATS Analyzer</Link></li>
                 <li><Link to="#" className="hover:text-primary transition-colors">Pricing</Link></li>
               </ul>
             </div>

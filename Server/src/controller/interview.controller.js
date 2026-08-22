@@ -4,21 +4,20 @@ const WebSocket = require("ws");
 async function getInterview(req, res) {
   try {
     const { id } = req.params;
+    const userId = req.auth?.userId;
+
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     const interview = await interviewModel
-      .findByIdAndUpdate(
-        id,
-        {
-          "interview.status": "running",
-        },
+      .findOneAndUpdate(
+        { _id: id, userId },
+        { "interview.status": "running" },
         { new: true }
       )
       .populate("resumeId");
 
     if (!interview) {
-      return res.status(404).json({
-        message: "Interview not found",
-      });
+      return res.status(404).json({ message: "Interview not found or unauthorized" });
     }
 
     const response = {
@@ -29,11 +28,24 @@ async function getInterview(req, res) {
     return res.status(200).json(response);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      message: "Internal Server Error",
-      id,
-    });
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
-module.exports = getInterview;
+async function getMyInterviews(req, res) {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const interviews = await interviewModel
+      .find({ userId })
+      .sort({ createdAt: -1 });
+      
+    return res.status(200).json(interviews);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+module.exports = { getInterview, getMyInterviews };
