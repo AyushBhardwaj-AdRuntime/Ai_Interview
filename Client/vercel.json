@@ -21,7 +21,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerk.accounts.dev https://*.googletagmanager.com; connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://api.web3forms.com https://*.google-analytics.com https://*.analytics.google.com wss://generativelanguage.googleapis.com https://generativelanguage.googleapis.com; img-src 'self' data: https://*.clerk.com https://img.clerk.com https://*.google-analytics.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com https://*.googletagmanager.com; connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com https://api.web3forms.com https://*.google-analytics.com https://*.analytics.google.com wss://generativelanguage.googleapis.com https://generativelanguage.googleapis.com; img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com https://*.google-analytics.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com; worker-src 'self' blob:;"
         }
       ]
     }
