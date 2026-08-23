@@ -1,10 +1,27 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, Sparkles, Target, Briefcase, Mic, CheckCircle2, BarChart } from "lucide-react";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { LogoIcon } from "@/components/ui/Logo";
+import { useEffect } from "react";
 
 export default function Landing() {
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (hash) {
+      const element = document.querySelector(hash);
+      if (element) {
+        // Small delay ensures layout is complete before calculating scroll position
+        setTimeout(() => {
+          const y = element.getBoundingClientRect().top + window.scrollY - 80; // 80px offset for fixed navbar
+          window.scrollTo({ top: y, behavior: "smooth" });
+        }, 100);
+      }
+    } else {
+      window.scrollTo(0, 0);
+    }
+  }, [hash]);
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-x-hidden font-sans">
       
@@ -244,7 +261,7 @@ export default function Landing() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link to="#" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
                 <li><Link to="#" className="hover:text-primary transition-colors">Terms of Service</Link></li>
-                <li><Link to="#" className="hover:text-primary transition-colors">Contact</Link></li>
+                <li><Link to="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
               </ul>
             </div>
           </div>

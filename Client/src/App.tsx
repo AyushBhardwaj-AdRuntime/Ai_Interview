@@ -56,6 +56,8 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+import Contact from "@/page/Contact";
+
 const AnimatedRoutes = () => {
   const location = useLocation();
   
@@ -66,6 +68,7 @@ const AnimatedRoutes = () => {
           {/* Public Routes */}
           <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
           <Route path="/ats" element={<PageTransition><AtsChecker /></PageTransition>} />
+          <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
 
           {/* Protected Routes */}
           <Route path="/dashboard" element={
