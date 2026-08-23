@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { Sun, Moon } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function Navbar() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <nav className="fixed top-0 w-full bg-background/90 backdrop-blur-md z-50 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -26,7 +30,20 @@ export default function Navbar() {
           <Link to="/#how-it-works" className="hover:text-foreground transition-colors">How it works</Link>
           <Link to="/#pricing" className="hover:text-foreground transition-colors">Pricing</Link>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="w-9 h-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200"
+          >
+            {theme === "dark" ? (
+              <Sun className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
+          </button>
+
           <SignedOut>
             <SignInButton mode="modal">
               <Button variant="ghost" className="hidden sm:inline-flex">Log in</Button>
@@ -49,3 +66,4 @@ export default function Navbar() {
     </nav>
   );
 }
+

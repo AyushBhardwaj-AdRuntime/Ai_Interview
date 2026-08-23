@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GlobalNavbar from "@/components/layout/GlobalNavbar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ThemeProvider } from "@/context/ThemeContext";
 import React from "react";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -98,15 +99,17 @@ const AnimatedRoutes = () => {
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-        <BrowserRouter>
-          <GlobalNavbar />
-          <AnimatedRoutes />
-          <Toaster position="top-right" />
-        </BrowserRouter>
-      </ClerkProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+          <BrowserRouter>
+            <GlobalNavbar />
+            <AnimatedRoutes />
+            <Toaster position="top-right" />
+          </BrowserRouter>
+        </ClerkProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 
