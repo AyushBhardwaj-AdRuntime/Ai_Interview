@@ -105,10 +105,10 @@ const Dashboard = () => {
 
   const getBadgeColor = (rec: string) => {
     const text = (rec || "").toLowerCase();
-    if (text.includes("strong hire")) return "bg-green-500 hover:bg-green-600";
-    if (text.includes("hire") && !text.includes("no")) return "bg-blue-500 hover:bg-blue-600";
-    if (text.includes("borderline")) return "bg-yellow-500 hover:bg-yellow-600";
-    return "bg-destructive hover:bg-destructive/90";
+    if (text.includes("strong hire")) return "bg-secondary text-secondary-foreground hover:bg-secondary/90";
+    if (text.includes("hire") && !text.includes("no")) return "bg-secondary/80 text-secondary-foreground hover:bg-secondary/90";
+    if (text.includes("borderline")) return "bg-yellow-500 hover:bg-yellow-600 text-white";
+    return "bg-destructive hover:bg-destructive/90 text-white";
   };
 
   return (
@@ -135,13 +135,13 @@ const Dashboard = () => {
           <Card className="bg-card border-border shadow-sm rounded-2xl">
             <CardContent className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Award className="w-5 h-5 text-primary" />
+                <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+                  <Award className="w-5 h-5 text-secondary" />
                 </div>
               </div>
               <h3 className="text-muted-foreground text-sm font-semibold uppercase tracking-wider mb-1">Average Score</h3>
               <div className="flex items-end gap-2">
-                <span className="text-4xl font-black">{averageScore}</span>
+                <span className="text-4xl font-black text-secondary">{averageScore}</span>
                 <span className="text-muted-foreground mb-1">/ 100</span>
               </div>
             </CardContent>
@@ -150,13 +150,13 @@ const Dashboard = () => {
           <Card className="bg-card border-border shadow-sm rounded-2xl">
             <CardContent className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <History className="w-5 h-5 text-blue-500" />
+                <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+                  <History className="w-5 h-5 text-secondary" />
                 </div>
               </div>
               <h3 className="text-muted-foreground text-sm font-semibold uppercase tracking-wider mb-1">Interviews Completed</h3>
               <div className="flex items-end gap-2">
-                <span className="text-4xl font-black">{totalCompleted}</span>
+                <span className="text-4xl font-black text-secondary">{totalCompleted}</span>
               </div>
             </CardContent>
           </Card>
@@ -164,8 +164,8 @@ const Dashboard = () => {
           <Card className="bg-card border-border shadow-sm rounded-2xl">
             <CardContent className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-green-500" />
+                <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-secondary" />
                 </div>
               </div>
               <h3 className="text-muted-foreground text-sm font-semibold uppercase tracking-wider mb-1">Strongest Skill</h3>
@@ -180,13 +180,13 @@ const Dashboard = () => {
         <div className="flex items-center gap-4 border-b border-border mb-6">
           <button
             onClick={() => setActiveTab('interviews')}
-            className={`pb-4 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'interviews' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            className={`pb-4 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'interviews' ? 'border-secondary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
           >
             Interview History
           </button>
           <button
             onClick={() => setActiveTab('ats')}
-            className={`pb-4 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'ats' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            className={`pb-4 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'ats' ? 'border-secondary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
           >
             ATS History
           </button>
@@ -220,14 +220,14 @@ const Dashboard = () => {
                   <div className="space-y-4">
                     {interviews.map((inv: any) => (
                       <Link to={`/result/${inv._id}`} key={inv._id}>
-                        <Card className="bg-card border-border shadow-sm rounded-2xl hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group">
+                        <Card className="bg-card border-border shadow-sm rounded-2xl hover:border-secondary/50 hover:shadow-md transition-all cursor-pointer group">
                           <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div className="flex items-start gap-4">
                               <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
                                 <span className="text-xl font-black text-foreground">{inv.interview.result.overallScore}</span>
                               </div>
                               <div>
-                                <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">{inv.job_title || "Mock Interview"}</h3>
+                                <h3 className="font-bold text-lg group-hover:text-secondary transition-colors line-clamp-1">{inv.job_title || "Mock Interview"}</h3>
                                 <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                                   <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {inv.company || "General"}</span>
                                   <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(inv.createdAt).toLocaleDateString()}</span>
@@ -235,10 +235,10 @@ const Dashboard = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-4 w-full sm:w-auto justify-end mt-2 sm:mt-0">
-                              <Badge className={`${getBadgeColor(inv.interview.result.recommendation)} text-white`}>
+                              <Badge className={`${getBadgeColor(inv.interview.result.recommendation)}`}>
                                 {inv.interview.result.recommendation || "Completed"}
                               </Badge>
-                              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-1 transition-all" />
                             </div>
                           </CardContent>
                         </Card>
@@ -270,7 +270,7 @@ const Dashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {atsScans.map((scan: any) => (
-                      <Card key={scan._id} className="bg-card border-border shadow-sm rounded-2xl hover:border-primary/50 transition-all cursor-default">
+                      <Card key={scan._id} className="bg-card border-border shadow-sm rounded-2xl hover:border-secondary/50 transition-all cursor-default">
                         <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
@@ -322,7 +322,7 @@ const Dashboard = () => {
                       return (
                         <div key={inv._id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                           <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-background bg-muted-foreground text-background font-bold shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow absolute left-0 md:left-1/2 -translate-x-1/2">
-                            <span className={`w-2 h-2 rounded-full ${improved ? 'bg-green-500' : (stayed ? 'bg-yellow-500' : 'bg-destructive')}`}></span>
+                            <span className={`w-2 h-2 rounded-full ${improved ? 'bg-secondary' : (stayed ? 'bg-yellow-500' : 'bg-destructive')}`}></span>
                           </div>
                           
                           <div className="w-[calc(100%-2rem)] md:w-[calc(50%-1.5rem)] pl-4 md:pl-0 md:group-odd:pr-4 md:group-even:pl-4">
@@ -332,7 +332,7 @@ const Dashboard = () => {
                                 <span className="font-semibold">{currScore}/100</span>
                               </div>
                               {improved !== null && !stayed && (
-                                <span className={`text-xs font-bold ${improved ? 'text-green-500' : 'text-destructive'}`}>
+                                <span className={`text-xs font-bold ${improved ? 'text-secondary' : 'text-destructive'}`}>
                                   {improved ? '+' : ''}{currScore - prevScore} pts
                                 </span>
                               )}

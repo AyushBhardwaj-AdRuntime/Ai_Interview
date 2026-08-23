@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Target, Briefcase, Mic, CheckCircle2, BarChart } from "lucide-react";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { LogoIcon } from "@/components/ui/Logo";
 
 export default function Landing() {
   return (
@@ -10,13 +11,19 @@ export default function Landing() {
       <main className="pt-28 pb-12">
         {/* HERO */}
         <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center space-y-5 pt-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 border border-border text-sm font-medium text-secondary-foreground animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Sparkles className="w-4 h-4 text-primary" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20 border border-secondary/40 text-sm font-medium text-secondary-foreground animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <Sparkles className="w-4 h-4 text-secondary" />
             <span>The ultimate AI interview coach</span>
           </div>
           
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground leading-[1.1] pt-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-            Practice for the job you <span className="text-primary relative whitespace-nowrap">actually want.</span>
+            Practice for the job you{" "}
+            <span
+              className="relative whitespace-nowrap"
+              style={{ background: "linear-gradient(90deg, #c8432d 0%, #a8c99a 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}
+            >
+              actually want.
+            </span>
           </h1>
           
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
@@ -54,10 +61,10 @@ export default function Landing() {
                 <h3 className="text-xl sm:text-2xl font-semibold mb-5 max-w-lg">"Tell me about a time you had to optimize a slow, complex system."</h3>
                 <div className="flex items-center gap-1 h-10">
                   {[4, 8, 12, 16, 10, 6, 14, 20, 16, 8, 4, 12, 18, 14, 6].map((h, i) => (
-                    <div key={i} className="w-1.5 bg-primary/70 rounded-full animate-pulse" style={{ minHeight: `${h}px`, animationDelay: `${i * 150}ms`, animationDuration: '1.2s' }} />
+                    <div key={i} className="w-1.5 bg-secondary/80 rounded-full animate-pulse" style={{ minHeight: `${h}px`, animationDelay: `${i * 150}ms`, animationDuration: '1.2s' }} />
                   ))}
                 </div>
-                <p className="text-xs text-primary font-medium mt-4 animate-pulse">Listening...</p>
+                <p className="text-xs text-secondary font-medium mt-4 animate-pulse">Listening...</p>
               </div>
             </div>
           </div>
@@ -84,12 +91,12 @@ export default function Landing() {
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-14 h-14 bg-secondary text-secondary-foreground rounded-2xl flex items-center justify-center text-xl font-bold mx-auto mb-4">01</div>
+              <div className="w-14 h-14 bg-secondary/20 text-secondary border border-secondary/30 rounded-2xl flex items-center justify-center text-xl font-bold mx-auto mb-4">01</div>
               <h3 className="text-lg font-semibold mb-2">Upload resume</h3>
               <p className="text-muted-foreground text-sm">We tailor the interview to your specific background.</p>
             </div>
             <div className="text-center">
-              <div className="w-14 h-14 bg-secondary text-secondary-foreground rounded-2xl flex items-center justify-center text-xl font-bold mx-auto mb-4">02</div>
+              <div className="w-14 h-14 bg-secondary/20 text-secondary border border-secondary/30 rounded-2xl flex items-center justify-center text-xl font-bold mx-auto mb-4">02</div>
               <h3 className="text-lg font-semibold mb-2">Add the job</h3>
               <p className="text-muted-foreground text-sm">Paste the job description so we ask exactly what they will.</p>
             </div>
@@ -106,17 +113,23 @@ export default function Landing() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid sm:grid-cols-3 gap-6">
               <div>
-                <Briefcase className="w-7 h-7 text-primary mb-3" />
+                <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center mb-3">
+                  <Briefcase className="w-5 h-5 text-secondary" />
+                </div>
                 <h3 className="text-base font-semibold mb-2">Tailored to You</h3>
                 <p className="text-sm text-muted-foreground">Questions generated dynamically based on your unique resume and target job.</p>
               </div>
               <div>
-                <Sparkles className="w-7 h-7 text-primary mb-3" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                </div>
                 <h3 className="text-base font-semibold mb-2">Realistic Voice AI</h3>
                 <p className="text-sm text-muted-foreground">Experience real pressure. Our AI listens, responds, and adapts to your answers.</p>
               </div>
               <div>
-                <Target className="w-7 h-7 text-primary mb-3" />
+                <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center mb-3">
+                  <Target className="w-5 h-5 text-secondary" />
+                </div>
                 <h3 className="text-base font-semibold mb-2">Actionable Feedback</h3>
                 <p className="text-sm text-muted-foreground">See exactly what you did well, where you stumbled, and how to improve.</p>
               </div>
@@ -131,10 +144,10 @@ export default function Landing() {
               <h2 className="text-3xl font-bold mb-4">Don't just practice.<br />Know where you stand.</h2>
               <p className="text-muted-foreground text-base mb-6">Get a comprehensive breakdown of your performance instantly.</p>
               <ul className="space-y-3">
-                <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> <span className="font-medium text-sm">Overall readiness score</span></li>
-                <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> <span className="font-medium text-sm">Technical vs Communication breakdown</span></li>
-                <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> <span className="font-medium text-sm">Identified strengths</span></li>
-                <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-primary" /> <span className="font-medium text-sm">Critical areas for improvement</span></li>
+                <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-secondary shrink-0" /> <span className="font-medium text-sm">Overall readiness score</span></li>
+                <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-secondary shrink-0" /> <span className="font-medium text-sm">Technical vs Communication breakdown</span></li>
+                <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-secondary shrink-0" /> <span className="font-medium text-sm">Identified strengths</span></li>
+                <li className="flex items-center gap-3"><CheckCircle2 className="w-5 h-5 text-secondary shrink-0" /> <span className="font-medium text-sm">Critical areas for improvement</span></li>
               </ul>
             </div>
             <div className="bg-muted/30 p-6 rounded-3xl border border-border">
@@ -146,11 +159,11 @@ export default function Landing() {
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between text-xs mb-1.5"><span className="text-muted-foreground">Technical</span> <span className="font-medium">84</span></div>
-                    <div className="w-full bg-muted rounded-full h-1.5"><div className="bg-chart-3 h-1.5 rounded-full" style={{ width: '84%' }}></div></div>
+                    <div className="w-full bg-muted rounded-full h-1.5"><div className="bg-secondary h-1.5 rounded-full" style={{ width: '84%' }}></div></div>
                   </div>
                   <div>
                     <div className="flex justify-between text-xs mb-1.5"><span className="text-muted-foreground">Communication</span> <span className="font-medium">71</span></div>
-                    <div className="w-full bg-muted rounded-full h-1.5"><div className="bg-chart-4 h-1.5 rounded-full" style={{ width: '71%' }}></div></div>
+                    <div className="w-full bg-muted rounded-full h-1.5"><div className="bg-secondary/70 h-1.5 rounded-full" style={{ width: '71%' }}></div></div>
                   </div>
                 </div>
               </div>
@@ -159,7 +172,7 @@ export default function Landing() {
         </section>
 
         {/* PERSONALIZED PRACTICE */}
-        <section className="py-20 bg-primary text-primary-foreground relative overflow-hidden">
+        <section className="py-20 text-primary-foreground relative overflow-hidden" style={{ background: "linear-gradient(135deg, #c8432d 0%, #1a2f4d 100%)" }}>
           <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
             <BarChart className="w-10 h-10 mx-auto mb-4 opacity-90" />
             <h2 className="text-3xl font-bold mb-4">Know exactly what to practice next.</h2>
@@ -207,9 +220,12 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs">M</div>
-                <span className="font-bold text-lg tracking-tight text-foreground">MockHire</span>
+              <div className="flex items-center gap-3 mb-4">
+                <LogoIcon className="w-8 h-8" />
+                <span className="font-bold text-xl tracking-tight flex items-center">
+                  <span className="text-foreground">Mock</span>
+                  <span className="text-primary">Hire</span>
+                </span>
               </div>
               <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
                 The ultimate AI interview coach. Practice for the job you actually want, get realistic interviews, and receive actionable feedback.

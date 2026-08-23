@@ -97,15 +97,32 @@ const AnimatedRoutes = () => {
   );
 };
 
+import { InitialLoader } from "@/components/ui/InitialLoader";
+import { useState, useEffect } from "react";
+
 const App = () => {
+  const [showLoader, setShowLoader] = useState(true);
+
+  // Prevent scrolling while loader is active
+  useEffect(() => {
+    if (showLoader) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [showLoader]);
+
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
           <BrowserRouter>
-            <GlobalNavbar />
-            <AnimatedRoutes />
-            <Toaster position="top-right" />
+            {showLoader && <InitialLoader onComplete={() => setShowLoader(false)} />}
+            <div className={`transition-opacity duration-700 ${showLoader ? 'opacity-0' : 'opacity-100'}`}>
+              <GlobalNavbar />
+              <AnimatedRoutes />
+              <Toaster position="top-right" />
+            </div>
           </BrowserRouter>
         </ClerkProvider>
       </QueryClientProvider>

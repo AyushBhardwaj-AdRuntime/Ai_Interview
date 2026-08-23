@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
+import { LogoIcon } from "@/components/ui/Logo";
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
@@ -11,9 +12,12 @@ export default function Navbar() {
     <nav className="fixed top-0 w-full bg-background/90 backdrop-blur-md z-50 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl">M</div>
-            <span className="font-bold text-xl tracking-tight text-foreground">MockHire</span>
+          <Link to="/" className="flex items-center gap-3">
+            <LogoIcon className="w-8 h-8" />
+            <span className="font-bold text-xl tracking-tight flex items-center">
+              <span className="text-foreground">Mock</span>
+              <span className="text-primary">Hire</span>
+            </span>
           </Link>
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
