@@ -121,83 +121,71 @@ export default function AtsChecker() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ background: "#09090f", minHeight: "100vh", color: "white", fontFamily: "'Inter',system-ui,sans-serif" }}>
-
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "56px 24px 80px" }}>
+    <div className="min-h-screen bg-background text-foreground pt-28 pb-20 px-6">
+      <div className="max-w-3xl mx-auto">
 
         {/* ── STEP: FORM ── */}
         {step === "form" && (
           <>
-            <div style={{ textAlign: "center", marginBottom: 40 }}>
-              <h1 style={{ fontSize: "clamp(28px,4.5vw,48px)", fontWeight: 900, letterSpacing: "-0.035em", lineHeight: 1.1, marginBottom: 12 }}>
+            <div className="text-center mb-10">
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight mb-3">
                 Upload your resume.<br />
-                <span style={{ background: "linear-gradient(135deg,#6366f1,#a78bfa,#ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
                   Add the job. See the truth.
                 </span>
               </h1>
-              <p style={{ fontSize: 15, color: "rgba(255,255,255,0.4)", lineHeight: 1.7 }}>
+              <p className="text-muted-foreground text-base">
                 See your match. Find your weaknesses. Practice the interview.
               </p>
             </div>
 
-            <div style={card}>
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
               {/* Upload */}
-              <label style={labelStyle}>1 — Your Resume</label>
+              <label className="block text-xs font-bold tracking-wider uppercase text-muted-foreground mb-3">1 — Your Resume</label>
               <div
                 onClick={() => fileRef.current?.click()}
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
                 onDrop={onDrop}
-                style={{
-                  border: `2px dashed ${fileName ? "rgba(16,185,129,0.45)" : dragOver ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.1)"}`,
-                  borderRadius: 12, padding: "28px 20px", textAlign: "center",
-                  cursor: "pointer", transition: "all 0.2s", marginBottom: 24,
-                  background: fileName ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.02)",
-                }}
+                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all mb-6 ${
+                  fileName ? "border-green-500/50 bg-green-500/5" : dragOver ? "border-primary/50 bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/50"
+                }`}
               >
-                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
                 {fileName ? (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                    <span style={{ fontSize: 14, color: "#10b981", fontWeight: 600 }}>{fileName}</span>
-                    <button onClick={e => { e.stopPropagation(); reset(); }} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.3)", fontSize: 15 }}>✕</button>
+                  <div className="flex items-center justify-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <span className="text-sm font-semibold text-green-600 dark:text-green-500">{fileName}</span>
+                    <button onClick={e => { e.stopPropagation(); reset(); }} className="ml-2 text-muted-foreground hover:text-foreground">✕</button>
                   </div>
                 ) : (
                   <>
-                    <div style={{ fontSize: 26, marginBottom: 8 }}>📄</div>
-                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
-                      Drag & drop or <span style={{ color: "#818cf8", textDecoration: "underline" }}>browse</span>
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Drag & drop or <span className="text-primary underline">browse</span>
                     </p>
-                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 4 }}>PDF · DOC · DOCX</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">PDF · DOC · DOCX</p>
                   </>
                 )}
               </div>
 
               {/* JD */}
-              <label style={labelStyle}>2 — Job Description</label>
+              <label className="block text-xs font-bold tracking-wider uppercase text-muted-foreground mb-3">2 — Job Description</label>
               <textarea
                 value={jdText}
                 onChange={e => setJdText(e.target.value)}
                 placeholder="Paste the full job posting here..."
                 rows={6}
-                style={{
-                  width: "100%", boxSizing: "border-box", resize: "vertical",
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.09)",
-                  borderRadius: 10, padding: "12px 14px", fontSize: 14, lineHeight: 1.65,
-                  color: "rgba(255,255,255,0.75)", outline: "none", fontFamily: "inherit",
-                  marginBottom: 24, transition: "border-color 0.2s",
-                }}
-                onFocus={e => (e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)")}
-                onBlur={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)")}
+                className="w-full bg-background border border-input rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary mb-6 transition-colors"
               />
 
-              {error && <div style={errorBox}>{error}</div>}
+              {error && <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 mb-4 text-sm text-destructive flex items-center gap-2"><AlertCircle className="w-4 h-4" />{error}</div>}
 
-              <button onClick={handleAnalyze} style={primaryBtn} className="hover:scale-105 active:scale-95 transition-all">
+              <button onClick={handleAnalyze} className="w-full bg-primary text-primary-foreground font-bold text-sm py-3.5 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md">
                 Analyze My Resume →
               </button>
 
-              <p style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.18)", marginTop: 12 }}>
+              <p className="text-center text-xs text-muted-foreground mt-4">
                 Free · No account needed · Results in ~15 seconds
               </p>
             </div>
@@ -206,20 +194,20 @@ export default function AtsChecker() {
 
         {/* ── STEP: LOADING ── */}
         {step === "loading" && (
-          <div style={{ animation: "fadeUp 0.4s ease both", textAlign: "center" }}>
-            <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 32, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-              <span style={spinner} /> Analyzing Resume Match...
+          <div className="text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-2xl font-bold mb-8 flex items-center justify-center gap-3">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" /> Analyzing Resume Match...
             </h2>
-            <div style={{ ...card, position: "relative", overflow: "hidden", marginBottom: 20 }}>
-              <Skeleton className="h-32 w-32 rounded-full mx-auto mb-6 bg-muted/20" />
-              <Skeleton className="h-6 w-48 rounded-md mx-auto bg-muted/20" />
+            <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+              <Skeleton className="h-32 w-32 rounded-full mx-auto mb-6" />
+              <Skeleton className="h-6 w-48 rounded-md mx-auto" />
             </div>
-            <div style={{ ...card, marginBottom: 20 }}>
-              <Skeleton className="h-6 w-32 rounded-md mb-4 bg-muted/20" />
+            <div className="bg-card border border-border rounded-2xl p-6">
+              <Skeleton className="h-6 w-32 rounded-md mb-4" />
               <div className="space-y-3">
-                <Skeleton className="h-4 w-full rounded-md bg-muted/20" />
-                <Skeleton className="h-4 w-5/6 rounded-md bg-muted/20" />
-                <Skeleton className="h-4 w-4/6 rounded-md bg-muted/20" />
+                <Skeleton className="h-4 w-full rounded-md" />
+                <Skeleton className="h-4 w-5/6 rounded-md" />
+                <Skeleton className="h-4 w-4/6 rounded-md" />
               </div>
             </div>
           </div>
@@ -227,40 +215,37 @@ export default function AtsChecker() {
 
         {/* ── STEP: SCORE & FULL REPORT ── */}
         {step === "score" && result && (
-          <div style={{ animation: "fadeUp 0.4s ease both" }}>
-            <div style={{ textAlign: "center", marginBottom: 10 }}>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)", fontWeight: 600, marginBottom: 4 }}>
-                {result.candidateName && `Results for ${result.candidateName} ·`} ATS Match Score
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="text-center mb-4">
+              <p className="text-sm font-semibold text-muted-foreground">
+                {result.candidateName && `Results for ${result.candidateName} · `} ATS Match Score
               </p>
             </div>
 
             {/* Score ring card */}
-            <div style={{
-              ...card, textAlign: "center", marginBottom: 20,
-              position: "relative", overflow: "hidden",
-            }}>
-              <div style={{
-                position: "absolute", top: -50, left: "50%", transform: "translateX(-50%)",
-                width: 260, height: 160,
-                background: `radial-gradient(ellipse,${color}22 0%,transparent 70%)`,
-                pointerEvents: "none",
-              }} />
-              <div style={{ position: "relative", display: "inline-block", marginBottom: 14 }}>
+            <div className="bg-card border border-border rounded-2xl p-8 text-center mb-6 relative overflow-hidden shadow-sm">
+              <div 
+                className="absolute top-[-50px] left-1/2 -translate-x-1/2 w-64 h-40 pointer-events-none opacity-20"
+                style={{ background: `radial-gradient(ellipse,${color} 0%,transparent 70%)` }}
+              />
+              
+              <div className="relative inline-block mb-4">
                 <ScoreRing value={result.score} color={color} />
-                <span style={{
-                  position: "absolute", top: "50%", left: "50%",
-                  transform: "translate(-50%,-50%)",
-                  fontSize: 32, fontWeight: 900, color: "white", fontFamily: "monospace",
-                }}>{result.score}</span>
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl font-black font-mono">
+                  {result.score}
+                </span>
               </div>
-              <div style={{
-                display: "inline-block", fontSize: 12, fontWeight: 700,
-                color: color, background: `${color}18`, border: `1px solid ${color}44`,
-                borderRadius: 999, padding: "4px 14px", marginBottom: 6,
-              }}>
-                {result.matchStatus} Match
+              
+              <div className="mb-2">
+                <span 
+                  className="inline-block text-xs font-bold px-4 py-1 rounded-full border"
+                  style={{ color: color, backgroundColor: `${color}18`, borderColor: `${color}44` }}
+                >
+                  {result.matchStatus} Match
+                </span>
               </div>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>
+              
+              <p className="text-sm text-muted-foreground">
                 {result.score >= 75 ? "Strong match — you're likely to pass ATS screening."
                   : result.score >= 50 ? "Moderate match — some key gaps are holding you back."
                   : "Weak match — your resume will likely be filtered out automatically."}
@@ -268,17 +253,17 @@ export default function AtsChecker() {
             </div>
 
             {/* Feedback & Keywords */}
-            <div style={{ ...card, marginBottom: 20 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Overall Feedback</h3>
-              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", lineHeight: 1.6, marginBottom: 20 }}>{result.feedback}</p>
+            <div className="bg-card border border-border rounded-2xl p-6 mb-6 shadow-sm">
+              <h3 className="text-lg font-bold mb-3">Overall Feedback</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">{result.feedback}</p>
               
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div className="flex flex-col gap-5">
                 {result.missingKeywords && result.missingKeywords.length > 0 && (
                   <div>
-                    <h4 style={{ fontSize: 13, fontWeight: 600, color: "#f87171", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Missing Keywords</h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    <h4 className="text-xs font-bold text-destructive uppercase tracking-wider mb-2">Missing Keywords</h4>
+                    <div className="flex flex-wrap gap-2">
                       {result.missingKeywords.map((kw: string, i: number) => (
-                        <span key={i} style={{ fontSize: 12, background: "rgba(239,68,68,0.1)", color: "#fca5a5", padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(239,68,68,0.2)" }}>{kw}</span>
+                        <span key={i} className="text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20 px-2.5 py-1 rounded-md">{kw}</span>
                       ))}
                     </div>
                   </div>
@@ -286,10 +271,10 @@ export default function AtsChecker() {
                 
                 {result.matchingKeywords && result.matchingKeywords.length > 0 && (
                   <div>
-                    <h4 style={{ fontSize: 13, fontWeight: 600, color: "#34d399", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Matching Keywords</h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    <h4 className="text-xs font-bold text-green-600 dark:text-green-500 uppercase tracking-wider mb-2">Matching Keywords</h4>
+                    <div className="flex flex-wrap gap-2">
                       {result.matchingKeywords.map((kw: string, i: number) => (
-                        <span key={i} style={{ fontSize: 12, background: "rgba(16,185,129,0.1)", color: "#6ee7b7", padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(16,185,129,0.2)" }}>{kw}</span>
+                        <span key={i} className="text-xs font-medium bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 px-2.5 py-1 rounded-md">{kw}</span>
                       ))}
                     </div>
                   </div>
@@ -299,20 +284,17 @@ export default function AtsChecker() {
 
             {/* Critical red flag */}
             {result.criticalRedFlag && (
-              <div style={{
-                ...card, marginBottom: 20,
-                borderColor: "rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.04)",
-              }}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-                  <span style={{ fontSize: 22, flexShrink: 0 }}>🔴</span>
+              <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-6 mb-6">
+                <div className="flex items-start gap-4">
+                  <AlertTriangle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
                   <div>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: "#f87171", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 6 }}>
+                    <p className="text-xs font-bold text-destructive uppercase tracking-wider mb-1">
                       Critical Gap
                     </p>
-                    <p style={{ fontSize: 15, fontWeight: 700, color: "white", marginBottom: 6 }}>
+                    <p className="text-base font-bold mb-1">
                       {result.criticalRedFlag.skill}
                     </p>
-                    <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.65, marginBottom: 10 }}>
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-2">
                       {result.criticalRedFlag.reason}
                     </p>
                   </div>
@@ -321,20 +303,17 @@ export default function AtsChecker() {
             )}
 
             {/* Practice Handoff CTA */}
-            <div style={{ textAlign: "center", marginTop: 32 }}>
-              <button onClick={handlePracticeJob} style={{
-                ...primaryBtn,
-                background: "linear-gradient(135deg, #6366f1, #a78bfa)",
-                boxShadow: "0 4px 20px rgba(99,102,241,0.25)"
-              }} className="hover:scale-105 active:scale-95 transition-all">
+            <div className="text-center mt-10">
+              <button 
+                onClick={handlePracticeJob} 
+                className="w-full bg-primary text-primary-foreground font-bold text-sm py-3.5 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md mb-3"
+              >
                 Practice this Job in AI Interview →
               </button>
-              <button onClick={reset} style={{
-                ...secondaryBtn,
-                marginTop: 12,
-                display: "block",
-                width: "100%"
-              }} className="hover:scale-105 active:scale-95 transition-all">
+              <button 
+                onClick={reset} 
+                className="w-full bg-transparent border border-border text-muted-foreground font-bold text-sm py-3.5 rounded-xl hover:bg-muted/50 active:scale-[0.98] transition-all"
+              >
                 Analyze another resume
               </button>
             </div>
@@ -342,49 +321,6 @@ export default function AtsChecker() {
         )}
 
       </div>
-
-      <style>{`
-        @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes spin   { to { transform:rotate(360deg); } }
-      `}</style>
     </div>
   );
 }
-
-// ─── Shared styles ─────────────────────────────────────────────────────────────
-const card: React.CSSProperties = {
-  background: "rgba(255,255,255,0.03)",
-  border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: 16, padding: "24px",
-};
-
-const labelStyle: React.CSSProperties = {
-  display: "block", fontSize: 11, fontWeight: 700, letterSpacing: "0.07em",
-  textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: 10,
-};
-
-const primaryBtn: React.CSSProperties = {
-  width: "100%", background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-  border: "none", borderRadius: 12, padding: "14px 0",
-  fontSize: 15, fontWeight: 700, color: "white", cursor: "pointer",
-  fontFamily: "inherit", boxShadow: "0 0 28px rgba(99,102,241,0.3)",
-  transition: "all 0.2s",
-};
-
-const secondaryBtn: React.CSSProperties = {
-  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: 12, padding: "13px 0", fontSize: 14, fontWeight: 700,
-  color: "rgba(255,255,255,0.6)", cursor: "pointer", fontFamily: "inherit",
-};
-
-const errorBox: React.CSSProperties = {
-  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)",
-  borderRadius: 10, padding: "12px 16px", marginBottom: 16,
-  fontSize: 13, color: "#f87171",
-};
-
-const spinner: React.CSSProperties = {
-  width: 15, height: 15, borderRadius: "50%",
-  border: "2px solid rgba(255,255,255,0.2)", borderTopColor: "white",
-  animation: "spin 0.7s linear infinite", display: "inline-block",
-};
