@@ -1,6 +1,0 @@
-<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <rect x="0" y="0" width="100" height="100" rx="22" fill="#1a2f4d" />
-  <circle cx="78" cy="22" r="14" fill="#c8432d" />
-  <text x="8" y="76" font-family="Georgia, 'Times New Roman', serif" font-size="62" font-weight="bold" fill="#f5f0e6" letter-spacing="-3">M</text>
-  <text x="46" y="76" font-family="Georgia, 'Times New Roman', serif" font-size="62" font-weight="bold" fill="#a8c99a" letter-spacing="-3">H</text>
-</svg>
