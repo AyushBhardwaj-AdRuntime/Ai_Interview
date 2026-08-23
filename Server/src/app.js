@@ -10,12 +10,19 @@ const cookieParser = require("cookie-parser");
 const { clerkMiddleware, requireAuth } = require('@clerk/express');
 
 app.use(cors({
-    origin: [
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "https://mockhire.me",
-        "https://www.mockhire.me"
-    ],
+    origin: function (origin, callback) {
+        const allowedOrigins = [
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "https://mockhire.me",
+            "https://www.mockhire.me"
+        ];
+        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(cookieParser());
