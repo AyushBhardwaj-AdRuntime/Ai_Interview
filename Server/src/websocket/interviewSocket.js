@@ -102,9 +102,15 @@ function setupInterviewSocket(wss) {
       }
     });
 
-    client.on("close", () => {
+    client.on("close", async () => {
       gemini.disconnect();
-
+      if (state.currentQuestion || state.currentAnswer) {
+        try {
+          await state.saveQuestionAnswer();
+        } catch (err) {
+          console.error("Error saving final question on close:", err);
+        }
+      }
     });
 
     // ✅ Kick off the interview — sendText starts the first AI turn

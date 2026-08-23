@@ -6,6 +6,11 @@ async function getResult(req, res) {
     const id = req.params.id;
     console.log("[Result] fetching interview:", id);
 
+    const mongoose = require("mongoose");
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, code: "INVALID_ID", message: "Invalid interview ID" });
+    }
+
     const { getAuth } = require("@clerk/express");
     let auth;
     try {
@@ -16,7 +21,7 @@ async function getResult(req, res) {
     const userId = auth?.userId || req.auth?.userId || req.userId;
     if (!userId) return res.status(401).json({ success: false, code: "UNAUTHORIZED", message: "Unauthorized" });
 
-    const interview = await interviewModel.findOne({ _id: id, userId }, "interview.questions interview.result");
+    const interview = await interviewModel.findOne({ _id: id, userId }, "interview.questions interview.result interview.status");
 
     if (!interview) {
       return res.status(404).json({ success: false, code: "NOT_FOUND", message: "Interview not found or unauthorized" });
