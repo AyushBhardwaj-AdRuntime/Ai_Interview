@@ -2,10 +2,9 @@ const mongoose = require("mongoose");
 
 const atsResultSchema = new mongoose.Schema(
   {
-    // Who did the check (anonymous session)
+    // Clerk user ID — stored as plain string (e.g. "user_xxx"), NOT ObjectId
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      type: String,
       required: true,
     },
 
