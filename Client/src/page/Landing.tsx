@@ -28,10 +28,7 @@ export default function Landing() {
       <main className="pt-28 pb-12">
         {/* HERO */}
         <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center space-y-5 pt-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20 border border-secondary/40 text-sm font-medium text-secondary-foreground animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Sparkles className="w-4 h-4 text-secondary" />
-            <span>The ultimate AI interview coach</span>
-          </div>
+         
           
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground leading-[1.1] pt-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
             Practice for the job you{" "}
@@ -75,10 +72,10 @@ export default function Landing() {
                 <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-5">
                   <Mic className="w-7 h-7 text-primary" />
                 </div>
-                <h3 className="text-xl sm:text-2xl font-semibold mb-5 max-w-lg">"Tell me about a time you had to optimize a slow, complex system."</h3>
-                <div className="flex items-center gap-1 h-10">
+                <p className="text-xl sm:text-2xl font-semibold mb-5 max-w-lg text-foreground">"Tell me about a time you had to optimize a slow, complex system."</p>
+                <div className="flex items-end justify-center gap-1 h-10">
                   {[4, 8, 12, 16, 10, 6, 14, 20, 16, 8, 4, 12, 18, 14, 6].map((h, i) => (
-                    <div key={i} className="w-1.5 bg-secondary/80 rounded-full animate-pulse" style={{ minHeight: `${h}px`, animationDelay: `${i * 150}ms`, animationDuration: '1.2s' }} />
+                    <div key={i} className="w-1.5 bg-secondary/80 rounded-full animate-pulse origin-bottom" style={{ height: '24px', transform: `scaleY(${h / 24})`, animationDelay: `${i * 150}ms`, animationDuration: '1.2s' }} />
                   ))}
                 </div>
                 <p className="text-xs text-secondary font-medium mt-4 animate-pulse">Listening...</p>
@@ -133,21 +130,21 @@ export default function Landing() {
                 <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center mb-3">
                   <Briefcase className="w-5 h-5 text-secondary" />
                 </div>
-                <h3 className="text-base font-semibold mb-2">Tailored to You</h3>
+                <h2 className="text-base font-semibold mb-2">Tailored to You</h2>
                 <p className="text-sm text-muted-foreground">Questions generated dynamically based on your unique resume and target job.</p>
               </div>
               <div>
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
                   <Sparkles className="w-5 h-5 text-primary" />
                 </div>
-                <h3 className="text-base font-semibold mb-2">Realistic Voice AI</h3>
+                <h2 className="text-base font-semibold mb-2">Realistic Voice AI</h2>
                 <p className="text-sm text-muted-foreground">Experience real pressure. Our AI listens, responds, and adapts to your answers.</p>
               </div>
               <div>
                 <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center mb-3">
                   <Target className="w-5 h-5 text-secondary" />
                 </div>
-                <h3 className="text-base font-semibold mb-2">Actionable Feedback</h3>
+                <h2 className="text-base font-semibold mb-2">Actionable Feedback</h2>
                 <p className="text-sm text-muted-foreground">See exactly what you did well, where you stumbled, and how to improve.</p>
               </div>
             </div>
@@ -170,7 +167,7 @@ export default function Landing() {
             <div className="bg-muted/30 p-6 rounded-3xl border border-border">
               <div className="bg-card p-5 rounded-2xl shadow-sm border border-border">
                 <div className="flex justify-between items-center mb-5">
-                  <h4 className="font-semibold text-base">Interview Score</h4>
+                  <h3 className="font-semibold text-base">Interview Score</h3>
                   <span className="text-2xl font-bold text-primary">78<span className="text-sm text-muted-foreground">/100</span></span>
                 </div>
                 <div className="space-y-4">
@@ -199,7 +196,7 @@ export default function Landing() {
             
             {/* Visual Feedback Mock */}
             <div className="bg-card text-foreground rounded-2xl p-6 text-left max-w-md mx-auto shadow-2xl border border-white/10">
-              <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Your Practice Plan</h4>
+              <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground border-b border-border pb-2">Your Practice Plan</h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0"></span>
