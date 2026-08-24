@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useCreateInterview } from "@/hooks/useInterview";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { SEO } from "@/components/seo/SEO";
 import { Input } from "@/components/ui/input";
 import {
   Card,
@@ -110,9 +111,7 @@ const Form = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 pt-24">
-      
-      
-
+      <SEO title="Setup Interview" noindex />
       <div className="w-full max-w-2xl">
         {/* Progress Tracker */}
         <div className="mb-8 relative">

@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
+import { SEO } from "@/components/seo/SEO";
+
 export default function Contact() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +37,11 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-background pt-24 pb-16">
+      <SEO 
+        title="Contact Us"
+        description="Get in touch with the MockHire team for support, feedback, or business inquiries."
+        canonical="/contact"
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header section */}

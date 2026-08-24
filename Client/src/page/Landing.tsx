@@ -4,6 +4,7 @@ import { ArrowRight, Sparkles, Target, Briefcase, Mic, CheckCircle2, BarChart } 
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { LogoIcon } from "@/components/ui/Logo";
 import { useEffect } from "react";
+import { SEO } from "@/components/seo/SEO";
 
 export default function Landing() {
   const { hash } = useLocation();
@@ -12,9 +13,8 @@ export default function Landing() {
     if (hash) {
       const element = document.querySelector(hash);
       if (element) {
-        // Small delay ensures layout is complete before calculating scroll position
         setTimeout(() => {
-          const y = element.getBoundingClientRect().top + window.scrollY - 80; // 80px offset for fixed navbar
+          const y = element.getBoundingClientRect().top + window.scrollY - 80;
           window.scrollTo({ top: y, behavior: "smooth" });
         }, 100);
       }
@@ -22,13 +22,13 @@ export default function Landing() {
       window.scrollTo(0, 0);
     }
   }, [hash]);
+  
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground overflow-x-hidden font-sans">
-      
+      <SEO canonical="/" />
       <main className="pt-28 pb-12">
         {/* HERO */}
         <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center space-y-5 pt-8">
-         
           
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight text-foreground leading-[1.1] pt-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
             Practice for the job you{" "}
@@ -45,7 +45,7 @@ export default function Landing() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-            <Link to="/ats" className="w-full sm:w-auto">
+            <Link to="/ats-analyzer" className="w-full sm:w-auto">
               <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 rounded-full text-lg shadow-sm transition-all hover:scale-[1.02] border-primary text-primary hover:bg-primary/5">
                 ATS Analyzer
               </Button>
@@ -248,14 +248,16 @@ export default function Landing() {
             <div>
               <h4 className="font-semibold text-foreground mb-3 text-sm">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/setup" className="hover:text-primary transition-colors">AI Interview</Link></li>
-                <li><Link to="/ats" className="hover:text-primary transition-colors">ATS Analyzer</Link></li>
-                <li><Link to="#" className="hover:text-primary transition-colors">Pricing</Link></li>
+                <li><Link to="/ai-interview" className="hover:text-primary transition-colors">AI Interview</Link></li>
+                <li><Link to="/ats-analyzer" className="hover:text-primary transition-colors">ATS Analyzer</Link></li>
+                <li><Link to="/pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
+                <li><Link to="/teams" className="hover:text-primary transition-colors">For Hiring Teams</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-foreground mb-3 text-sm">Legal</h4>
+              <h4 className="font-semibold text-foreground mb-3 text-sm">Company</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
                 <li><Link to="#" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
                 <li><Link to="#" className="hover:text-primary transition-colors">Terms of Service</Link></li>
                 <li><Link to="/contact" className="hover:text-primary transition-colors">Contact</Link></li>

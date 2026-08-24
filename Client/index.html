@@ -29,6 +29,30 @@
     <!-- Search Engine Indexing -->
     <meta name="robots" content="index, follow" />
 
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://mockhire.me/#website",
+            "url": "https://mockhire.me/",
+            "name": "MockHire",
+            "description": "AI Mock Interview & ATS Analyzer Platform"
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://mockhire.me/#organization",
+            "name": "MockHire",
+            "url": "https://mockhire.me/",
+            "logo": "https://mockhire.me/favicon.png",
+            "sameAs": []
+          }
+        ]
+      }
+    </script>
+
     <!-- Google tag (gtag.js) -->
     <script defer src="https://www.googletagmanager.com/gtag/js?id=G-KQ2XSX8FMP"></script>
     <script>

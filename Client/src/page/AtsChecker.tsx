@@ -4,6 +4,8 @@ import { Upload, ChevronRight, FileText, CheckCircle2, AlertTriangle, AlertCircl
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAtsAnalysis } from "@/hooks/useAts";
 
+import { SEO } from "@/components/seo/SEO";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Step = "form" | "loading" | "score" | "questions" | "analyzing" | "paywall";
 
@@ -122,6 +124,11 @@ export default function AtsChecker() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background text-foreground pt-28 pb-20 px-6">
+      <SEO 
+        title="ATS Resume Checker Tool"
+        description="Upload your resume and a job description to instantly see your ATS match score, missing keywords, and critical formatting errors."
+        canonical="/ats"
+      />
       <div className="max-w-3xl mx-auto">
 
         {/* ── STEP: FORM ── */}

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import MediaHandler from "@/Services/mediaHandler";
 import { useInterview } from "@/hooks/useInterview";
 import { toast } from "sonner";
+import { SEO } from "@/components/seo/SEO";
 
 type SessionState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'paused';
 
@@ -258,6 +259,7 @@ const Interview = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
+      <SEO title="Interview in Progress" noindex />
       {/* Immersive Central Card */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}

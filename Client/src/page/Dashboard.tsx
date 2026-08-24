@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInterviewHistory } from '@/hooks/useInterview';
 import { useAtsHistory } from '@/hooks/useAts';
+import { SEO } from '@/components/seo/SEO';
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -42,6 +43,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground font-sans pb-24 pt-24 px-6 md:px-12">
+        <SEO title="Dashboard" noindex />
         <div className="max-w-6xl mx-auto space-y-10">
           <div className="flex flex-col gap-4">
             <Skeleton className="h-10 w-64" />
@@ -72,6 +74,7 @@ const Dashboard = () => {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground gap-4">
+        <SEO title="Dashboard Error" noindex />
         <p className="text-destructive font-medium">{error}</p>
         <Button onClick={() => window.location.reload()} variant="outline">Retry</Button>
       </div>
@@ -113,7 +116,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 pb-24">
-      
+      <SEO title="Dashboard" noindex />
       <div className="mx-auto max-w-6xl space-y-10 p-6 md:p-12 pt-24 md:pt-32">
         
         {/* Header */}

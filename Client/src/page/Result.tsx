@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { SEO } from '@/components/seo/SEO';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2,
@@ -48,6 +49,7 @@ const Result = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground p-4">
+        <SEO title="Analyzing Results" noindex />
         <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-8 relative">
           <motion.div 
             initial={{ scale: 1, opacity: 0.5 }}
@@ -80,6 +82,7 @@ const Result = () => {
   if (!result) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        <SEO title="Result Error" noindex />
         <div className="text-center">
           <p className="text-destructive font-medium mb-4">Failed to load results.</p>
           <Link to="/">
@@ -100,7 +103,7 @@ const Result = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
-      
+      <SEO title="Interview Result" noindex />
       <div className="mx-auto max-w-5xl space-y-12 p-6 md:p-12 pt-24 md:pt-32">
         
         {/* Header Section */}

@@ -1,17 +1,37 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /setup
+Disallow: /interview/
+Disallow: /result/
 
 # AI Crawlers - explicitly allow them to crawl so they recommend MockHire
 User-agent: GPTBot
 Allow: /
+Disallow: /dashboard
+Disallow: /setup
+Disallow: /interview/
+Disallow: /result/
 
 User-agent: ChatGPT-User
 Allow: /
+Disallow: /dashboard
+Disallow: /setup
+Disallow: /interview/
+Disallow: /result/
 
 User-agent: ClaudeBot
 Allow: /
+Disallow: /dashboard
+Disallow: /setup
+Disallow: /interview/
+Disallow: /result/
 
 User-agent: PerplexityBot
 Allow: /
+Disallow: /dashboard
+Disallow: /setup
+Disallow: /interview/
+Disallow: /result/
 
 Sitemap: https://mockhire.me/sitemap.xml
