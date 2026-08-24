@@ -8,27 +8,22 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-  console.log("[DEBUG Axios] Interceptor started for URL:", config.url);
   try {
     // Attempt to inject token asynchronously if Clerk is available globally
-    console.log("[DEBUG Axios] Checking window.Clerk:", !!(typeof window !== 'undefined' && window.Clerk && window.Clerk.session));
     // @ts-ignore
     if (typeof window !== 'undefined' && window.Clerk && window.Clerk.session) {
-      console.log("[DEBUG Axios] Calling window.Clerk.session.getToken()");
       // @ts-ignore
       const token = await Promise.race([
         window.Clerk.session.getToken(),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Clerk token timeout')), 3000))
       ]);
-      console.log("[DEBUG Axios] Token received:", !!token);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
   } catch (error) {
-    console.error('[DEBUG Axios] Error fetching Clerk token', error);
+    console.error('Error fetching Clerk token', error);
   }
-  console.log("[DEBUG Axios] Interceptor finished. Returning config.");
   return config;
 });
 

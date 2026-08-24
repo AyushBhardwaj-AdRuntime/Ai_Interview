@@ -75,7 +75,6 @@ const Form = () => {
   const { mutateAsync: createPreInterview } = useCreateInterview();
 
   async function prepareInterview() {
-    console.log("[DEBUG Form.tsx] prepareInterview started");
     const formData = new FormData();
     try {
       setLoading(true);
@@ -90,20 +89,16 @@ const Form = () => {
       formData.append("difficulty", difficulty);
       formData.append("experience", experience);
       
-      console.log("[DEBUG Form.tsx] calling createPreInterview mutation");
       const data = await createPreInterview(formData);
-      console.log("[DEBUG Form.tsx] mutation returned:", data);
       
       setInterviewId(data._id || (data as any).id);
       toast.success("Interview prepared successfully!");
       setStep(4);
     } catch (err: any) {
-      console.error("[DEBUG Form.tsx] caught error in prepareInterview:", err);
       const message = err.response?.data?.message || "Setup failed. Please try again.";
       toast.error(message);
     } finally {
       setLoading(false);
-      console.log("[DEBUG Form.tsx] prepareInterview finished");
     }
   }
 

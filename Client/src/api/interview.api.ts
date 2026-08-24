@@ -3,9 +3,7 @@ import type { Interview, InterviewResult } from '@/types/index';
 
 export const interviewApi = {
   createPreInterview: async (data: Partial<Interview> | FormData): Promise<Interview> => {
-    console.log("[DEBUG API] createPreInterview called with data:", data);
     const response = await apiClient.post('/pre-interview', data);
-    console.log("[DEBUG API] response received:", !!response);
     return response.data;
   },
 
