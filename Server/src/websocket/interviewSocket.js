@@ -102,9 +102,11 @@ function setupInterviewSocket(wss) {
         }
 
 
+        const isAiSpeaking = content.modelTurn?.parts?.some(p => p.text || p.inlineData?.data);
+
         if (
           state.phase === PHASE.ANSWERING &&
-          content.outputTranscription?.text
+          (content.outputTranscription?.text || isAiSpeaking)
         ) {
           // Previous answer is complete — save Q&A pair
           await state.saveQuestionAnswer();
@@ -181,7 +183,6 @@ function setupInterviewSocket(wss) {
     // Track audio message count
     let audioCount = 0;
 
-    // Register this ONCE
     client.on("message", (message) => {
       try {
         const data = JSON.parse(message);
@@ -190,6 +191,9 @@ function setupInterviewSocket(wss) {
           audioCount++;
           if (audioCount <= 3 || audioCount % 100 === 0) {
               console.log(`[WS][IN] audio | bytes=${data.data.length}`);
+          }
+          if (state.phase === PHASE.WAITING_FOR_ANSWER) {
+             state.phase = PHASE.ANSWERING;
           }
           gemini.sendAudio(data.data);
         }
