@@ -76,73 +76,94 @@ function setupInterviewSocket(wss) {
           console.error("[INTERVIEW] Failed to auto-complete assessment:", err.message);
         }
       }
-    }
+    // Explicitly tracks which turn the incoming transcriptions belong to.
+    // This decouples the AI's question state from the user's answer state.
+    let activeUserTurnId = 0;
 
-    gemini.onMessage = async (message) => {
-      try {
-        const content = message.serverContent;
+    // Async queue to serialize Gemini events and prevent concurrent state mutations
+    let messageQueue = Promise.resolve();
 
-        if (!content) {
+    gemini.onMessage = (message) => {
+      messageQueue = messageQueue.then(async () => {
+        try {
+          const content = message.serverContent;
 
-          return;
-        }
-
-        // DEBUG: Log what fields are present
-        const fields = Object.keys(content);
-
-        // Send raw message to client first so audio/text isn't dropped if DB fails
-        if (client.readyState === 1) {
-          const type = message.serverContent ? 'serverContent' : (message.setupComplete ? 'setupComplete' : 'other');
-          const hasAudio = !!(content?.modelTurn?.parts?.some(p => p.inlineData?.data));
-          const hasText = !!(content?.modelTurn?.parts?.some(p => p.text)) || !!content?.outputTranscription?.text;
-          console.log(`[WS][OUT] type=${type} | audio=${hasAudio} | text=${hasText}`);
-          client.send(JSON.stringify(message));
-        } else {
-          console.log(`[WS][OUT] Dropped message | type=${message.serverContent ? 'serverContent' : (message.setupComplete ? 'setupComplete' : 'other')} | client.readyState=${client.readyState}`);
-        }
-
-
-        const isAiSpeaking = content.modelTurn?.parts?.some(p => p.text || p.inlineData?.data);
-
-        if (
-          state.phase === PHASE.ANSWERING &&
-          (content.outputTranscription?.text || isAiSpeaking)
-        ) {
-          // Previous answer is complete — save Q&A pair
-          await state.saveQuestionAnswer();
-          if (isVerification) {
-            console.log(`[INTERVIEW][QUESTION] number=${state.questionCount}/${MAX_VERIFICATION_QUESTIONS}`);
+          if (!content) {
+            return;
           }
 
-          state.currentQuestion = "";
-          state.currentAnswer = "";
-          state.phase = PHASE.ASKING;
+          // Send raw message to client first so audio/text isn't dropped if DB fails
+          if (client.readyState === 1) {
+            const type = message.serverContent ? 'serverContent' : (message.setupComplete ? 'setupComplete' : 'other');
+            if (type !== 'serverContent') {
+              client.send(JSON.stringify(message));
+            } else {
+              client.send(JSON.stringify({ serverContent: message.serverContent }));
+            }
+          } else {
+            console.log(`[WS][OUT] Dropped message | type=${message.serverContent ? 'serverContent' : (message.setupComplete ? 'setupComplete' : 'other')} | client.readyState=${client.readyState}`);
+          }
 
-          // DETERMINISTIC: check if max questions reached
-          await checkVerificationComplete();
-          if (intentionalClose) return; // skip further processing if closing
-        }
+          // 1. Handle Turn Complete & Interruption FIRST
+          if (content.turnComplete || content.interrupted) {
+            state.phase = PHASE.WAITING_FOR_ANSWER;
+            
+            // The AI is done speaking (or was interrupted).
+            // Any transcription arriving from this point forward definitively belongs to the NEXT answer.
+            activeUserTurnId = state.questionCount;
+            
+            if (content.interrupted) console.log("[INTERVIEW] AI interrupted by user");
+          }
 
-        if (content.outputTranscription?.text) {
-          state.addQuestion(content.outputTranscription.text);
+          // 2. Safely handle input transcription SECOND using Explicit Turn Ownership
+          if (content.inputTranscription?.text) {
+            if (activeUserTurnId < state.questionCount) {
+              // LATE TRANSCRIPTION: This chunk belongs to a turn that was already saved.
+              // activeUserTurnId hasn't incremented yet because the AI is still speaking Q(n+1).
+              const doc = await interviewModel.findById(state.interviewId);
+              if (doc && doc.interview.questions[activeUserTurnId]) {
+                 doc.interview.questions[activeUserTurnId].answer += " " + content.inputTranscription.text;
+                 await doc.save();
+              }
+              console.log(`[USER][LATE_TURN_${activeUserTurnId}]:`, content.inputTranscription.text);
+            } else {
+              // ACTIVE TRANSCRIPTION: This chunk belongs to the current memory buffer.
+              state.phase = PHASE.ANSWERING;
+              state.addAnswer(content.inputTranscription.text);
+              console.log(`[USER][TURN_${activeUserTurnId}]:`, content.inputTranscription.text);
+            }
+          }
 
-          console.log("Gemini:", content.outputTranscription.text);
-        }
+          // 3. Check if AI is speaking (signifies end of user turn) THIRD
+          // If in the same message as transcription, transcription was already appended above!
+          const isAiSpeaking = content.modelTurn?.parts?.some(p => p.text || p.inlineData?.data);
 
+          if (
+            state.phase === PHASE.ANSWERING &&
+            (content.outputTranscription?.text || isAiSpeaking)
+          ) {
+            // Previous answer is complete — save Q&A pair
+            await state.saveQuestionAnswer();
+            if (isVerification) {
+              console.log(`[INTERVIEW][QUESTION] number=${state.questionCount}/${MAX_VERIFICATION_QUESTIONS}`);
+            }
 
-        if (content.turnComplete) {
+            state.currentQuestion = "";
+            state.currentAnswer = "";
+            state.phase = PHASE.ASKING;
 
-          state.phase = PHASE.WAITING_FOR_ANSWER;
-        }
+            // DETERMINISTIC: check if max questions reached
+            await checkVerificationComplete();
+            if (intentionalClose) return; // skip further processing if closing
+          }
 
-        if (content.inputTranscription?.text) {
+          // 4. Process Output Transcription
+          if (content.outputTranscription?.text) {
+            state.addQuestion(content.outputTranscription.text);
+            console.log(`[GEMINI][TURN_${state.questionCount}]:`, content.outputTranscription.text);
+          }
 
-          state.phase = PHASE.ANSWERING;
-
-          state.addAnswer(content.inputTranscription.text);
-
-          console.log("User:", content.inputTranscription.text);
-        }
+          // 5. Process Model Turn Parts (Text/Audio)
 
         if (content.modelTurn?.parts) {
           for (const part of content.modelTurn.parts) {
@@ -156,10 +177,10 @@ function setupInterviewSocket(wss) {
               }
             }
           }
+        } catch (err) {
+          console.error("Error in gemini.onMessage:", err);
         }
-      } catch (err) {
-        console.error("Error in gemini.onMessage:", err);
-      }
+      }).catch(err => console.error("Error in messageQueue:", err));
     };
 
     gemini.onClose = () => {

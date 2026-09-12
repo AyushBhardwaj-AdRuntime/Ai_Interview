@@ -20,6 +20,7 @@ class GeminiLive {
 
       config: {
         responseModalities: [Modality.AUDIO],
+        inputAudioTranscription: { model: "audio" },
         systemInstruction: {
           parts: [
             {

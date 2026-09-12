@@ -8,6 +8,9 @@ const cookieParser = require("cookie-parser");
 const { clerkMiddleware } = require('@clerk/express');
 const { requireAuth } = require('./middleware/auth.middleware');
 
+console.log(`[CONFIG][CLERK] publishableKey=${process.env.CLERK_PUBLISHABLE_KEY ? 'present' : 'missing'}`);
+console.log(`[CONFIG][CLERK] secretKey=${process.env.CLERK_SECRET_KEY ? 'present' : 'missing'}`);
+
 app.use(cors({
     origin: function (origin, callback) {
         const allowedOrigins = [
