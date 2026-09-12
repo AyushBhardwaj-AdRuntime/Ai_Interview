@@ -1,20 +1,14 @@
 const extractResumeText = require("../services/resume")
 const extractGitHubRepo = require("../services/github")
 const { parseResume } = require("../services/ai_service");
-const normalizeCandidateProfile = require("../services/profile.service")
+const { normalizeCandidateProfile } = require("../services/profile.service")
 const resumeModel = require("../model/resume.model")
 const interviewModel = require("../model/interview.model")
-const { getAuth } = require("@clerk/express");
+
 
 async function preInterview(req, res) {
     try {
-        let auth;
-        try {
-            auth = getAuth(req);
-        } catch (e) {
-            console.warn("getAuth failed:", e.message);
-        }
-        const userId = auth?.userId || req.auth?.userId || req.userId;
+        const userId = req.auth?.userId || req.userId;
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized: Missing user ID. Please check Clerk keys." });
         }
@@ -40,7 +34,7 @@ async function preInterview(req, res) {
                 },
                 {
                     upsert: true,     // create if doesn't exist
-                    new: true,        // return the updated doc
+                    returnDocument: 'after',  // return the updated doc
                     setDefaultsOnInsert: true,
                 }
             );

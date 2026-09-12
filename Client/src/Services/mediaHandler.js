@@ -175,10 +175,14 @@ class MediaHandler {
   //   onFrame(base64);
   // }
 
-  playAudio(arrayBuffer) {
-    if (!this.audioContext) return;
+  async playAudio(arrayBuffer) {
+    if (!this.audioContext) {
+      console.log("[MEDIA][PLAY] Creating audioContext inside playAudio");
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      await this.audioContext.audioWorklet.addModule("/static/pcm-processor.js");
+    }
     if (this.audioContext.state === "suspended") {
-      this.audioContext.resume();
+      await this.audioContext.resume();
     }
 
     const pcmData = new Int16Array(arrayBuffer);

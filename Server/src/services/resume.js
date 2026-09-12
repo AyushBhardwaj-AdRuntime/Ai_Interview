@@ -10,7 +10,7 @@ async function  extractResumeText(file) {
     }
 
     let resumeText = "";
-
+console.log(resumeText)
     const ext =  await path.extname(file.originalname).toLowerCase();
 
     if (ext === ".pdf") {

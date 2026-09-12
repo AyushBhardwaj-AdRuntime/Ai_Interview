@@ -2,7 +2,7 @@ const extractResumeText = require("../services/resume");
 const { analyzeATS, parseResume } = require("../services/ai_service");
 const Resume = require("../model/resume.model");
 const AtsResult = require("../model/atsResult.model");
-const normalizeCandidateProfile = require("../services/profile.service");
+const { normalizeCandidateProfile } = require("../services/profile.service");
 
 async function atsAnalyzer(req, res) {
   try {
@@ -31,11 +31,11 @@ async function atsAnalyzer(req, res) {
       await Resume.findOneAndUpdate(
         { userId },
         { $set: { userId, candidateProfile: resumeData, originalFile: { name: resumeName } } },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
       );
     } else {
       const existing = await Resume.findOne({ userId }).sort({ createdAt: -1 });
-      if (!existing) {
+      if (!existing || !existing.candidateProfile) {
         return res.status(404).json({ success: false, code: "RESUME_NOT_FOUND", message: "No resume found. Please upload your resume." });
       }
       resumeData = existing.candidateProfile;
@@ -45,19 +45,15 @@ async function atsAnalyzer(req, res) {
     // ── 3. Run ATS Analysis (full — includes criticalRedFlag + teaserQuestions) ──
     const full = await analyzeATS(resumeData, jdText);
 
+    const { normalizeAtsResult } = require("../services/profile.service");
+    const normalizedResult = normalizeAtsResult(full);
+
     // ── 4. Save FULL result to MongoDB ────────────────────────────────────
     const saved = await AtsResult.create({
       userId,
       resumeName,
       jdSnippet: jdText.slice(0, 300).trim(),
-      score: full.score,
-      matchStatus: full.matchStatus,
-      matchingKeywords: full.matchingKeywords || [],
-      missingKeywords: full.missingKeywords || [],
-      feedback: full.feedback || "",
-      suggestions: full.suggestions || [],
-      criticalRedFlag: full.criticalRedFlag || {},
-      teaserQuestions: full.teaserQuestions || [],
+      ...normalizedResult
     });
 
     console.log("[ATS] Saved result id:", saved._id, "| score:", saved.score);
@@ -87,14 +83,8 @@ async function atsAnalyzer(req, res) {
 }
 async function getAtsHistory(req, res) {
   try {
-    const { getAuth } = require("@clerk/express");
-    let auth;
-    try {
-        auth = getAuth(req);
-    } catch (e) {
-        console.warn("getAuth failed:", e.message);
-    }
-    const userId = auth?.userId || req.auth?.userId || req.userId;
+    let userId = req.auth?.userId || req.userId;
+    if (userId) userId = userId.toString();
     if (!userId || userId.startsWith("anonymous_")) {
       // Guests don't get history unless we want to track them by anonymous ID, but usually dashboard is logged in.
       return res.status(401).json({ success: false, code: "UNAUTHORIZED", message: "Must be logged in to view ATS history." });

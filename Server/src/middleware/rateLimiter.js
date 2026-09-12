@@ -19,8 +19,10 @@ const preInterviewLimiter = rateLimit({
     keyGenerator: (req) => {
         let auth;
         try { auth = getAuth(req); } catch(e) {}
-        const userId = auth?.userId || req.auth?.userId || req.userId;
-        return userId || req.ip;
+        let userId = auth?.userId || req.auth?.userId || req.userId;
+        if (userId) userId = userId.toString();
+        const ipAddr = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        return userId || ("ip_" + String(ipAddr).split(',')[0]);
     },
     message: { success: false, code: "RATE_LIMIT_EXCEEDED", message: "You have reached the limit of 5 interviews per hour. Please try again later." },
 });
@@ -31,7 +33,8 @@ const atsLimiter = rateLimit({
     max: (req, res) => {
         let auth;
         try { auth = getAuth(req); } catch(e) {}
-        const userId = auth?.userId || req.auth?.userId || req.userId;
+        let userId = auth?.userId || req.auth?.userId || req.userId;
+        if (userId) userId = userId.toString();
         if (userId && !userId.startsWith("anonymous_")) return 20;
         return 5;
     },
@@ -40,8 +43,10 @@ const atsLimiter = rateLimit({
     keyGenerator: (req) => {
         let auth;
         try { auth = getAuth(req); } catch(e) {}
-        const userId = auth?.userId || req.auth?.userId || req.userId;
-        return userId || req.ip;
+        let userId = auth?.userId || req.auth?.userId || req.userId;
+        if (userId) userId = userId.toString();
+        const ipAddr = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        return userId || ("ip_" + String(ipAddr).split(',')[0]);
     },
     message: { success: false, code: "RATE_LIMIT_EXCEEDED", message: "You have reached your ATS analysis limit for this hour." },
 });

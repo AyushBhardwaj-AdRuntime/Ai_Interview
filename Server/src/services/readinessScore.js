@@ -67,11 +67,10 @@ function calculate({ gapResult, evidenceClaims, interviewEvaluations = null }) {
 
   // ── Dimension 1: Skill Coverage ──────────────────────────────────────────────
   // What % of required skills are evidenced (SUPPORTED or PARTIALLY)?
-  const {
-    totalRequiredSkills,
-    matchedRequiredSkills,
-    criticalGapCount,
-  } = gapResult.coverageSummary;
+  const summary = gapResult.coverageSummary || {};
+  const totalRequiredSkills = summary.totalRequiredSkills || 0;
+  const matchedRequiredSkills = summary.matchedRequiredSkills || 0;
+  const criticalGapCount = summary.criticalGapCount || 0;
 
   const rawSkillCoverage =
     totalRequiredSkills > 0
@@ -195,10 +194,7 @@ function calculate({ gapResult, evidenceClaims, interviewEvaluations = null }) {
     },
   };
 
-  console.log(
-    `[ReadinessScore] ${preliminary ? "Preliminary" : "Final"} score: ${total}`,
-    result.dimensions
-  );
+
 
   return result;
 }

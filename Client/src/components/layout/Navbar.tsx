@@ -29,6 +29,7 @@ export default function Navbar() {
             <div className="absolute top-full left-0 w-48 bg-card border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 flex flex-col p-2 z-50">
               <Link to="/ats" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors">ATS Analyzer</Link>
               <Link to="/setup" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors">AI Interview</Link>
+              <Link to="/assessment/setup" className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors">AI Assessment</Link>
             </div>
           </div>
           <Link to="/#how-it-works" className="hover:text-foreground transition-colors">How it works</Link>

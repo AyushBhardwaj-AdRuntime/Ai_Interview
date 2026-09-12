@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const { atsAnalyzer, getAtsHistory } = require("../controller/atsAnalyzer.controller");
-const { requireAuth } = require('@clerk/express');
+const { requireAuth } = require('../middleware/auth.middleware');
 
 const upload = multer({ dest: "uploads/" });
 

@@ -8,7 +8,7 @@ const groq = new Groq({
 
 async function parseResume(resumeText) {
   try {
-    console.log("parseResume request starting");
+    const start = Date.now();
     const response = await groq.chat.completions.create({
       model: "openai/gpt-oss-120b",
       messages: [
@@ -87,9 +87,14 @@ Return exactly this JSON (no other text):
       .replace(/```\s*$/i, "")
       .trim();
 
-    console.log("parseResume response (first 300 chars):", cleaned.slice(0, 300));
+    console.log(`[LLM] model=openai/gpt-oss-120b | action=parse_resume | duration=${Date.now() - start}ms`);
 
-    return JSON.parse(cleaned);
+    try {
+      return JSON.parse(cleaned);
+    } catch (parseError) {
+      console.error("parseResume JSON parse failed. Content:", cleaned.slice(0, 500));
+      throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
+    }
   } catch (error) {
     console.error("parseResume error:", error);
     throw error;
@@ -98,7 +103,7 @@ Return exactly this JSON (no other text):
 
 async function analyzeATS(resumeData, jdText) {
   try {
-    console.log("analyzeATS request starting");
+    const start = Date.now();
     const resumeText = typeof resumeData === "string" ? resumeData : JSON.stringify(resumeData);
 
     const response = await groq.chat.completions.create({
@@ -151,12 +156,168 @@ Rules:
       .replace(/```\s*$/i, "")
       .trim();
 
-    return JSON.parse(cleaned);
+    console.log(`[LLM] model=openai/gpt-oss-120b | action=analyze_ats | duration=${Date.now() - start}ms`);
+
+    try {
+      return JSON.parse(cleaned);
+    } catch (parseError) {
+      console.error("analyzeATS JSON parse failed. Content:", cleaned.slice(0, 500));
+      throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
+    }
   } catch (error) {
     console.error("analyzeATS error:", error);
     throw error;
   }
 }
 
+async function evaluateInterview(payload) {
+  try {
+    const start = Date.now();
+    
+    // Convert to JSON string for prompt
+    const payloadStr = JSON.stringify(payload, null, 2);
 
-module.exports = { parseResume, analyzeATS };
+    const response = await groq.chat.completions.create({
+      model: "openai/gpt-oss-120b",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert technical interviewer evaluator.
+Evaluate the candidate's interview performance based on the provided data.
+
+Return ONLY valid JSON matching this exact schema (no markdown, no explanation):
+
+{
+  "interviewPerformance": {
+    "technical": <number 0-100>,
+    "communication": <number 0-100>,
+    "depth": <number 0-100>
+  },
+  "claimVerifications": [
+    {
+      "claim": "<string>",
+      "score": <number 0-10>,
+      "answerQuality": <number 0-10>
+    }
+  ],
+  "strengths": ["<string>"],
+  "weaknesses": ["<string>"],
+  "riskAreas": ["<string>"],
+  "recommendedActions": ["<string>"],
+  "summary": "<string>",
+  "claimVerificationDetails": [
+    {
+      "claim": "<string>",
+      "skill": "<string>",
+      "status": "<SUPPORTED | PARTIALLY | UNVERIFIED | CONTRADICTED>",
+      "explanation": "<string>"
+    }
+  ]
+}
+
+Rules:
+- Be strict but fair in technical evaluation.
+- All fields are required.
+- Do NOT return markdown formatting like \`\`\`json. Return pure JSON text.`,
+        },
+        {
+          role: "user",
+          content: `Evaluate this interview data:\n\n${payloadStr}`,
+        },
+      ],
+    });
+
+    const content = response?.choices?.[0]?.message?.content;
+    if (!content) throw new Error("LLM returned no content for interview evaluation");
+
+    const cleaned = content
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/```\s*$/i, "")
+      .trim();
+
+    console.log(`[LLM] model=openai/gpt-oss-120b | action=evaluate_interview | duration=${Date.now() - start}ms`);
+
+    return JSON.parse(cleaned);
+  } catch (error) {
+    console.error("evaluateInterview error:", error);
+    throw error;
+  }
+}
+
+async function generateReports(payload) {
+    try {
+        const start = Date.now();
+        const payloadStr = JSON.stringify(payload, null, 2);
+    
+        const response = await groq.chat.completions.create({
+          model: "openai/gpt-oss-120b",
+          messages: [
+            {
+              role: "system",
+              content: `You are an expert HR and technical hiring manager report generator.
+    Based on the provided evaluation, readiness score, and candidate profile, generate a Candidate Report and a Hiring Report.
+    
+    Return ONLY valid JSON matching this exact schema (no markdown, no explanation):
+    
+    {
+      "candidateReport": {
+        "candidate": { "name": "<string>" },
+        "readinessScore": <number>,
+        "summary": "<string>",
+        "strengths": ["<string>"],
+        "skillGaps": [
+          { "skill": "<string>", "severity": "<low | medium | high>", "reason": "<string>" }
+        ],
+        "claimVerification": [
+          { "claim": "<string>", "skill": "<string>", "status": "<SUPPORTED | PARTIALLY | UNVERIFIED | CONTRADICTED>", "explanation": "<string>" }
+        ],
+        "interviewSummary": "<string>",
+        "recommendedActions": ["<string>"]
+      },
+      "hiringReport": {
+        "candidate": { "name": "<string>" },
+        "readinessScore": <number>,
+        "summary": "<string>",
+        "claimVerification": [
+          { "claim": "<string>", "status": "<string>", "explanation": "<string>" }
+        ],
+        "verifiedSkills": ["<string>"],
+        "unverifiedClaims": ["<string>"],
+        "interviewSummary": "<string>",
+        "riskAreas": ["<string>"],
+        "recommendedVerificationQuestions": ["<string>"]
+      }
+    }
+    
+    Rules:
+    - readinessScore must be exactly the number provided in the input, do NOT invent a new score.
+    - All fields are required.
+    - Do NOT return markdown formatting like \`\`\`json. Return pure JSON text.`,
+            },
+            {
+              role: "user",
+              content: `Generate reports from this data:\n\n${payloadStr}`,
+            },
+          ],
+        });
+    
+        const content = response?.choices?.[0]?.message?.content;
+        if (!content) throw new Error("LLM returned no content for report generation");
+    
+        const cleaned = content
+          .replace(/^```json\s*/i, "")
+          .replace(/^```\s*/i, "")
+          .replace(/```\s*$/i, "")
+          .trim();
+    
+        console.log(`[LLM] model=openai/gpt-oss-120b | action=generate_reports | duration=${Date.now() - start}ms`);
+
+        return JSON.parse(cleaned);
+      } catch (error) {
+        console.error("generateReports error:", error);
+        throw error;
+      }
+}
+
+module.exports = { parseResume, analyzeATS, evaluateInterview, generateReports };

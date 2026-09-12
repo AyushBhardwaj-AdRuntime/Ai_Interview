@@ -463,10 +463,6 @@ function classifyEvidence(claims, inspections = [], githubAvailable = false) {
       ? Math.round((evidenced / classified.length) * 100)
       : 0;
 
-  console.log(
-    `[EvidenceEngine] Classified ${classified.length} claims — coverage: ${coveragePercent}%`,
-    summary
-  );
 
   return { claims: classified, coveragePercent, summary };
 }
@@ -481,6 +477,8 @@ function classifyEvidence(claims, inspections = [], githubAvailable = false) {
  */
 function extractClaimsFromProfile(resumeProfile) {
   const claims = [];
+  
+  if (!resumeProfile || typeof resumeProfile !== "object") return claims;
 
   // Each skill is a direct claim
   for (const skill of resumeProfile.skills || []) {

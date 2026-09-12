@@ -17,19 +17,21 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInterviewHistory } from '@/hooks/useInterview';
 import { useAtsHistory } from '@/hooks/useAts';
+import { useAssessmentHistory } from '@/hooks/useAssessment';
 import { SEO } from '@/components/seo/SEO';
 
 const Dashboard = () => {
   const { user } = useUser();
-  const [activeTab, setActiveTab] = useState<'interviews' | 'ats'>('interviews');
+  const [activeTab, setActiveTab] = useState<'interviews' | 'ats' | 'assessments'>('assessments');
 
   const { data: rawInterviews = [], isLoading: isLoadingInterviews, isError: isErrorInterviews } = useInterviewHistory();
   const { data: rawAtsScans = [], isLoading: isLoadingAts, isError: isErrorAts } = useAtsHistory();
+  const { data: rawAssessments = [], isLoading: isLoadingAssessments, isError: isErrorAssessments } = useAssessmentHistory();
 
-  const loading = isLoadingInterviews || isLoadingAts;
-  const error = (isErrorInterviews || isErrorAts) ? "Unable to load dashboard data." : "";
+  const loading = isLoadingInterviews || isLoadingAts || isLoadingAssessments;
+  const error = (isErrorInterviews || isErrorAts || isErrorAssessments) ? "Unable to load dashboard data." : "";
 
-  // Filter and sort interviews — guard against non-array API responses (e.g. 500 error shape)
+  // Filter and sort interviews
   const interviews = React.useMemo(() => {
     if (!Array.isArray(rawInterviews)) return [];
     const completed = rawInterviews.filter((inv: any) => inv.interview?.status === 'completed' && inv.interview?.result?.overallScore);
@@ -37,8 +39,7 @@ const Dashboard = () => {
   }, [rawInterviews]);
 
   const atsScans = Array.isArray(rawAtsScans) ? rawAtsScans : [];
-
-
+  const assessments = Array.isArray(rawAssessments) ? rawAssessments : [];
 
   if (loading) {
     return (
@@ -125,10 +126,10 @@ const Dashboard = () => {
             <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome back, {user?.firstName || "Candidate"}</h1>
             <p className="text-muted-foreground">Track your progress and prepare for your next big role.</p>
           </div>
-          <Link to="/setup">
+          <Link to="/assessment/setup">
             <Button size="lg" className="rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2">
               <PlusCircle className="w-5 h-5" />
-              New Interview
+              New Assessment
             </Button>
           </Link>
         </div>
@@ -179,20 +180,29 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Tabs for Navigation */}
-        <div className="flex items-center gap-4 border-b border-border mb-6">
-          <button
+        {/* Tabs */}
+        <div className="flex flex-wrap items-center gap-2 mb-6 bg-secondary/10 p-1 rounded-xl w-fit">
+          <Button 
+            variant={activeTab === 'assessments' ? 'default' : 'ghost'} 
+            onClick={() => setActiveTab('assessments')}
+            className={`rounded-lg transition-all ${activeTab === 'assessments' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Assessments
+          </Button>
+          <Button 
+            variant={activeTab === 'interviews' ? 'default' : 'ghost'} 
             onClick={() => setActiveTab('interviews')}
-            className={`pb-4 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'interviews' ? 'border-secondary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            className={`rounded-lg transition-all ${activeTab === 'interviews' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
           >
-            Interview History
-          </button>
-          <button
+            Mock Interviews
+          </Button>
+          <Button 
+            variant={activeTab === 'ats' ? 'default' : 'ghost'} 
             onClick={() => setActiveTab('ats')}
-            className={`pb-4 px-2 text-sm font-medium transition-colors border-b-2 ${activeTab === 'ats' ? 'border-secondary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            className={`rounded-lg transition-all ${activeTab === 'ats' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
           >
-            ATS History
-          </button>
+            ATS Scans
+          </Button>
         </div>
 
         {/* Two Column Layout for History & Progress */}
@@ -202,10 +212,10 @@ const Dashboard = () => {
           <div className="lg:col-span-2 space-y-4">
             
             {activeTab === 'interviews' && (
-              <>
+              <div className="space-y-4">
                 <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
                   <History className="w-5 h-5 text-muted-foreground" />
-                  Recent Interviews
+                  Recent Mock Interviews
                 </h2>
                 
                 {interviews.length === 0 ? (
@@ -214,91 +224,134 @@ const Dashboard = () => {
                       <Briefcase className="w-6 h-6 text-muted-foreground" />
                     </div>
                     <p className="font-medium text-foreground">No completed interviews yet.</p>
-                    <p className="text-sm text-muted-foreground mb-4">Take your first mock interview to see stats.</p>
-                    <Link to="/setup">
+                    <Link to="/setup" className="mt-4">
                       <Button variant="outline" size="sm">Start Practice</Button>
                     </Link>
                   </Card>
                 ) : (
-                  <div className="space-y-4">
-                    {interviews.map((inv: any) => (
-                      <Link to={`/result/${inv._id}`} key={inv._id}>
-                        <Card className="bg-card border-border shadow-sm rounded-2xl hover:border-secondary/50 hover:shadow-md transition-all cursor-pointer group">
-                          <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div className="flex items-start gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                                <span className="text-xl font-black text-foreground">{inv.interview.result.overallScore}</span>
-                              </div>
-                              <div>
-                                <h3 className="font-bold text-lg group-hover:text-secondary transition-colors line-clamp-1">{inv.job_title || "Mock Interview"}</h3>
-                                <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                                  <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> {inv.company || "General"}</span>
-                                  <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(inv.createdAt).toLocaleDateString()}</span>
-                                </div>
+                  interviews.map((inv: any) => (
+                    <Link to={`/result/${inv._id}`} key={inv._id}>
+                      <Card className="bg-card border-border shadow-sm rounded-2xl hover:border-secondary/50 hover:shadow-md transition-all cursor-pointer group mb-4">
+                        <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                              <span className="text-xl font-black text-foreground">{inv.interview.result.overallScore}</span>
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-lg group-hover:text-secondary transition-colors line-clamp-1">{inv.job_title || "Mock Interview"}</h3>
+                              <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(inv.createdAt).toLocaleDateString()}</span>
                               </div>
                             </div>
-                            <div className="flex items-center gap-4 w-full sm:w-auto justify-end mt-2 sm:mt-0">
-                              <Badge className={`${getBadgeColor(inv.interview.result.recommendation)}`}>
-                                {inv.interview.result.recommendation || "Completed"}
-                              </Badge>
-                              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-1 transition-all" />
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    ))}
-                  </div>
+                          </div>
+                          <div className="flex items-center gap-4 w-full sm:w-auto justify-end mt-2 sm:mt-0">
+                            <Badge className={`${getBadgeColor(inv.interview.result.recommendation)}`}>
+                              {inv.interview.result.recommendation || "Completed"}
+                            </Badge>
+                            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-1 transition-all" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))
                 )}
-              </>
+              </div>
             )}
 
             {activeTab === 'ats' && (
-              <>
+              <div className="space-y-4">
                 <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
                   <History className="w-5 h-5 text-muted-foreground" />
-                  ATS Scan History
+                  Recent ATS Scans
                 </h2>
                 
                 {atsScans.length === 0 ? (
                   <Card className="border-dashed border-2 bg-muted/20 shadow-none h-48 flex flex-col items-center justify-center text-center">
                     <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                      <BarChart className="w-6 h-6 text-muted-foreground" />
+                      <Briefcase className="w-6 h-6 text-muted-foreground" />
                     </div>
                     <p className="font-medium text-foreground">No ATS scans yet.</p>
-                    <p className="text-sm text-muted-foreground mb-4">Analyze your first resume to see how you match against a job description.</p>
-                    <Link to="/ats">
-                      <Button variant="outline" size="sm">Try ATS Analyzer</Button>
+                    <Link to="/ats" className="mt-4">
+                      <Button variant="outline" size="sm">Scan Resume</Button>
                     </Link>
                   </Card>
                 ) : (
-                  <div className="space-y-4">
-                    {atsScans.map((scan: any) => (
-                      <Card key={scan._id} className="bg-card border-border shadow-sm rounded-2xl hover:border-secondary/50 transition-all cursor-default">
+                  atsScans.map((scan: any) => (
+                    <Card key={scan._id} className="bg-card border-border shadow-sm rounded-2xl hover:border-secondary/50 hover:shadow-md transition-all cursor-pointer group mb-4">
+                      <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <Link to={`/ats?resultId=${scan._id}`} className="flex-grow flex items-start gap-4">
+                          <div>
+                            <h3 className="font-bold text-lg group-hover:text-secondary transition-colors line-clamp-1">{scan.resumeName || "Resume Scan"}</h3>
+                            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1.5"><Award className="w-4 h-4" /> {scan.matchStatus} Match</span>
+                              <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(scan.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </Link>
+                        <div className="flex items-center gap-4 w-full sm:w-auto justify-end mt-2 sm:mt-0">
+                          <Link to="/setup" state={{ jdText: scan.jdSnippet }}>
+                            <Button variant="ghost" size="sm">Practice this Job</Button>
+                          </Link>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Assessments Tab */}
+            {activeTab === 'assessments' && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold tracking-tight mb-4 flex items-center gap-2">
+                  <History className="w-5 h-5 text-muted-foreground" />
+                  Recent AI Assessments
+                </h2>
+                
+                {assessments.length === 0 ? (
+                  <Card className="border-dashed border-2 bg-muted/20 shadow-none h-48 flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                      <Briefcase className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                    <p className="font-medium text-foreground">No Assessments yet.</p>
+                    <Link to="/assessment/setup" className="mt-4">
+                      <Button variant="outline" size="sm">Check Readiness</Button>
+                    </Link>
+                  </Card>
+                ) : (
+                  assessments.map((assessment: any) => (
+                    <Link to={assessment.status === 'completed' || assessment.status === 'error' ? `/assessment/${assessment._id}/result` : `/assessment/${assessment._id}/progress`} key={assessment._id}>
+                      <Card className="bg-card border-border shadow-sm rounded-2xl hover:border-secondary/50 hover:shadow-md transition-all cursor-pointer group mb-4">
                         <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                           <div className="flex items-start gap-4">
                             <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                              <span className="text-xl font-black text-foreground">{scan.score}</span>
+                               {assessment.status === 'completed' && assessment.readinessScore !== undefined ? (
+                                  <span className="text-xl font-black text-foreground">{assessment.readinessScore}</span>
+                               ) : (
+                                  <BarChart className="w-6 h-6 text-muted-foreground" />
+                               )}
                             </div>
                             <div>
-                              <h3 className="font-bold text-lg text-foreground line-clamp-1">{scan.resumeName || "Resume Scan"}</h3>
+                              <h3 className="font-bold text-lg group-hover:text-secondary transition-colors line-clamp-1">AI Assessment</h3>
                               <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1.5"><Award className="w-4 h-4" /> {scan.matchStatus} Match</span>
-                                <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(scan.createdAt).toLocaleDateString()}</span>
+                                <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(assessment.createdAt).toLocaleDateString()}</span>
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-4 w-full sm:w-auto justify-end mt-2 sm:mt-0">
-                            <Link to="/setup" state={{ jdText: scan.jdSnippet }}>
-                              <Button variant="ghost" size="sm">Practice this Job</Button>
-                            </Link>
+                            <Badge variant={assessment.status === 'completed' ? 'default' : assessment.status === 'error' ? 'destructive' : 'outline'} className="uppercase">
+                              {assessment.status}
+                            </Badge>
+                            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-secondary group-hover:translate-x-1 transition-all" />
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
+                    </Link>
+                  ))
                 )}
-              </>
+              </div>
             )}
+            
           </div>
 
           {/* Progress Timeline Tracker */}

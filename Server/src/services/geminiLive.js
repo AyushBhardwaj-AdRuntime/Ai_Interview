@@ -10,25 +10,16 @@ class GeminiLive {
     this.onMessage = null;
     this.onOpen = null;
     this.onClose = null;
+    this.onError = null;
   }
 
   async connect(systemPrompt) {
+    console.log("[GEMINI] connecting");
     this.session = await this.ai.live.connect({
       model: "gemini-3.1-flash-live-preview",
 
       config: {
         responseModalities: [Modality.AUDIO],
-        inputAudioTranscription: {},
-        outputAudioTranscription: {},
-        realtimeInputConfig: {
-          automaticActivityDetection: {
-            disabled: false,
-            startOfSpeechSensitivity: "START_SENSITIVITY_HIGH",
-            endOfSpeechSensitivity: "END_SENSITIVITY_HIGH",
-            prefixPaddingMs: 100,
-            silenceDurationMs: 500,
-          },
-        },
         systemInstruction: {
           parts: [
             {
@@ -46,7 +37,7 @@ Wait for the candidate after every question.
 
       callbacks: {
         onopen: () => {
-
+          console.log("[GEMINI] connected");
           this.onOpen?.();
         },
 
@@ -57,17 +48,28 @@ Wait for the candidate after every question.
           
           if (message.serverContent) {
              const content = message.serverContent;
-             if (content.modelTurn) {
-
+             if (content.modelTurn?.parts) {
+                let inlineDataCount = 0;
+                let inlineDataLength = 0;
+                for (const part of content.modelTurn.parts) {
+                   if (part.text) {
+                      console.log("[GEMINI TEXT]", part.text);
+                   }
+                   if (part.inlineData?.data) {
+                      inlineDataCount++;
+                      inlineDataLength += part.inlineData.data.length;
+                      console.log(`[GEMINI][AUDIO] received | bytes=${part.inlineData.data.length}`);
+                   }
+                }
+                if (inlineDataCount > 0) {
+                   console.log(`[GEMINI][AUDIO_SUMMARY] parts=${inlineDataCount} | total_bytes=${inlineDataLength}`);
+                }
              }
              if (content.outputTranscription?.text) {
-                console.log("[GEMINI] outputTranscription (Model Text):", content.outputTranscription.text);
+                console.log(`[GEMINI][OUTPUT] ${content.outputTranscription.text}`);
              }
              if (content.inputTranscription?.text) {
-                console.log("[GEMINI] inputTranscription (User Text):", content.inputTranscription.text);
-             }
-             if (content.turnComplete) {
-
+                console.log(`[GEMINI][INPUT] ${content.inputTranscription.text}`);
              }
           }
           
@@ -75,44 +77,33 @@ Wait for the candidate after every question.
         },
 
         onclose: (event) => {
-
+          console.log("[GEMINI][CLOSE]");
+          console.log(`code=${event?.code} reason=${event?.reason} wasClean=${event?.wasClean}`);
+          console.log("[GEMINI] closed");
           this.onClose?.(event);
         },
 
         onerror: (error) => {
-          console.error("[GEMINI] Error:", error);
+          console.log(`[GEMINI][ERROR] ${error?.message || error}`);
+          if (error?.stack) console.log(error.stack);
+          this.onError?.(error);
         },
       },
     });
   }
 
-sendAudio(base64) {
-
-  if (!this.session) return;
-
-  const pcm = Buffer.from(base64, "base64");
-
-  let max = 0;
-  let min = 32767;
-
-  for (let i = 0; i + 1 < pcm.length; i += 2) {
-    const sample = pcm.readInt16LE(i);
-
-    max = Math.max(max, Math.abs(sample));
-    min = Math.min(min, sample);
+  sendAudio(base64) {
+    if (!this.session) return;
+    this.session.sendRealtimeInput({
+      audio: {
+        data: base64,
+        mimeType: "audio/pcm;rate=16000",
+      },
+    });
   }
 
-
-
-  this.session.sendRealtimeInput({
-    audio: {
-      data: base64,
-      mimeType: "audio/pcm;rate=16000",
-    },
-  });
-}
   sendText(text) {
-
+    if (!this.session) return;
     this.session.sendClientContent({
       turns: [
         {
@@ -125,6 +116,8 @@ sendAudio(base64) {
   }
 
   disconnect() {
+    console.log("[GEMINI][DISCONNECT_REQUEST]");
+    console.trace();
     this.session?.close();
   }
 }

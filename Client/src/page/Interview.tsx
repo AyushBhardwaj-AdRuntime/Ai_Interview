@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
 import type { Easing } from "framer-motion";
 import { Mic, PhoneOff, Pause, Play, Loader2 } from "lucide-react";
@@ -9,11 +9,14 @@ import MediaHandler from "@/Services/mediaHandler";
 import { useInterview } from "@/hooks/useInterview";
 import { toast } from "sonner";
 import { SEO } from "@/components/seo/SEO";
+import { apiClient } from "@/api/client";
 
 type SessionState = 'idle' | 'connecting' | 'listening' | 'speaking' | 'paused';
 
 const Interview = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const assessmentId = searchParams.get('assessmentId');
   const navigate = useNavigate();
 
   const { data: interview, error: queryError, refetch: fetchInterview } = useInterview(id || '');
@@ -71,7 +74,11 @@ const Interview = () => {
 
   function connectSocket() {
     return new Promise<void>((resolve, reject) => {
-      socketRef.current = new WebSocket(`${WS_URL}?id=${id}`);
+      // Pass assessmentId so server knows this is a verification interview
+      const wsUrl = assessmentId
+        ? `${WS_URL}?id=${id}&assessmentId=${assessmentId}`
+        : `${WS_URL}?id=${id}`;
+      socketRef.current = new WebSocket(wsUrl);
       receiveAudioData();
 
       socketRef.current.onopen = () => {
@@ -133,6 +140,21 @@ const Interview = () => {
     if (!socketRef.current) return;
     socketRef.current.onmessage = (event) => {
       const message = JSON.parse(event.data);
+
+      // Server-triggered auto-complete (3-question verification limit reached)
+      if (message.type === "interview_auto_complete") {
+        console.log("[Interview] Auto-complete received from server");
+        mediaRef.current.stopAudio();
+        mediaRef.current.stopAudioPlayback();
+        socketRef.current = null;
+        if (assessmentId) {
+          navigate(`/assessment/${assessmentId}/progress`);
+        } else {
+          navigate(`/result/${id}`);
+        }
+        return;
+      }
+
       const content = message.serverContent;
       const parts = content?.modelTurn?.parts || [];
 
@@ -140,15 +162,20 @@ const Interview = () => {
 
       for (const part of parts) {
         if (part?.inlineData) {
-          hasAudio = true;
-          const base64 = part.inlineData.data;
-          const binary = atob(base64);
-          const bytes = new Uint8Array(binary.length);
+          try {
+            hasAudio = true;
+            const base64 = part.inlineData.data;
+            const binary = atob(base64);
+            console.log(`[WS][IN] inlineData found | decoded bytes=${binary.length}`);
+            const bytes = new Uint8Array(binary.length);
 
-          for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
+            for (let i = 0; i < binary.length; i++) {
+              bytes[i] = binary.charCodeAt(i);
+            }
+            mediaRef.current.playAudio(bytes.buffer);
+          } catch (err) {
+            console.error("[WS][IN] Failed to decode inlineData chunk:", err);
           }
-          mediaRef.current.playAudio(bytes.buffer);
         }
       }
 
@@ -167,6 +194,7 @@ const Interview = () => {
       intentionalCloseRef.current = false; // allow reconnect
       try {
         setSessionState('connecting');
+        await mediaRef.current.initializeAudio();
         if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
           await connectSocket();
           await sendAudioData();
@@ -190,12 +218,22 @@ const Interview = () => {
     }
   };
 
-  const finishInterview = () => {
+  const finishInterview = async () => {
     intentionalCloseRef.current = true; // don't reconnect on end
     mediaRef.current.stopAudio();
     mediaRef.current.stopAudioPlayback();
     if (socketRef.current) socketRef.current.close();
-    navigate(`/result/${id}`);
+    
+    if (assessmentId) {
+      try {
+        await apiClient.post(`/agent/assess/${assessmentId}/interview-complete`, { interviewId: id });
+      } catch (err) {
+        console.error("Failed to mark assessment complete", err);
+      }
+      navigate(`/assessment/${assessmentId}/progress`);
+    } else {
+      navigate(`/result/${id}`);
+    }
   };
 
   if (error) {

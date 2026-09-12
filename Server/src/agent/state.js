@@ -188,7 +188,6 @@ function applyToolResult(state, toolName, args, result) {
 
   // If the tool returned an error, log but don't crash — orchestrator handles recovery
   if (result.error) {
-    console.warn(`[STATE] Tool "${toolName}" returned error: ${result.error}`);
     return state;
   }
 
@@ -282,10 +281,10 @@ function applyToolResult(state, toolName, args, result) {
 
     // ── batch_evaluation ──────────────────────────────────────────────────
     // ONE batch LLM call result after interview completion
-    // result shape: { claimVerifications[], interviewPerformance{} }
     case "batch_evaluation":
       state.interview.evaluations = result.claimVerifications || [];
       state.interview.interviewPerformance = result.interviewPerformance || {};
+      state.interview.batchEvaluation = result;
       break;
 
     // ── generate_reports ──────────────────────────────────────────────────

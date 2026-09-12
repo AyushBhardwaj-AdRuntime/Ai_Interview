@@ -11,14 +11,7 @@ async function getResult(req, res) {
       return res.status(400).json({ success: false, code: "INVALID_ID", message: "Invalid interview ID" });
     }
 
-    const { getAuth } = require("@clerk/express");
-    let auth;
-    try {
-        auth = getAuth(req);
-    } catch (e) {
-        console.warn("getAuth failed:", e.message);
-    }
-    const userId = auth?.userId || req.auth?.userId || req.userId;
+    const userId = req.auth?.userId || req.userId;
     if (!userId) return res.status(401).json({ success: false, code: "UNAUTHORIZED", message: "Unauthorized" });
 
     const interview = await interviewModel.findOne({ _id: id, userId }, "interview.questions interview.result interview.status");

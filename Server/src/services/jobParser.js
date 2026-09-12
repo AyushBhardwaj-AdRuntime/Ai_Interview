@@ -95,6 +95,7 @@ Return exactly this JSON:
   let profile;
   try {
     profile = JSON.parse(cleaned);
+    if (!profile) profile = {};
   } catch (e) {
     throw new Error(`[JobParser] Failed to parse LLM JSON response: ${e.message}`);
   }

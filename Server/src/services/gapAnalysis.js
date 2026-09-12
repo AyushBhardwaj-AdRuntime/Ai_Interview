@@ -33,8 +33,32 @@ const { normalizeSkill } = require("./evidenceEngine");
  * @returns {object} Gap analysis result
  */
 function analyzeGaps(jobProfile, evidenceClaims) {
-  if (!jobProfile || !Array.isArray(evidenceClaims)) {
-    throw new Error("[GapAnalysis] jobProfile and evidenceClaims are required.");
+  if (!Array.isArray(evidenceClaims)) {
+    throw new Error("[GapAnalysis] evidenceClaims must be an array.");
+  }
+  
+  if (!jobProfile) {
+    console.warn("[GapAnalysis] jobProfile is null or missing, returning empty gap analysis.");
+    return {
+      matchedSkills: [],
+      skillGaps: [],
+      criticalGaps: [],
+      unverifiedClaims: evidenceClaims.map(c => ({ 
+        claim: c.claim, skill: c.skill, status: c.status, 
+        requiredByJob: false, preferredByJob: false 
+      })),
+      preferredMissing: [],
+      preferredMatched: [],
+      coverageSummary: {
+        totalRequiredSkills: 0,
+        matchedRequiredSkills: 0,
+        skillGapCount: 0,
+        criticalGapCount: 0,
+        unverifiedClaimCount: evidenceClaims.length,
+        preferredMissingCount: 0,
+        requiredCoveragePercent: 100,
+      }
+    };
   }
 
   // Build a lookup: normalized skill → best evidence claim
@@ -156,8 +180,6 @@ function analyzeGaps(jobProfile, evidenceClaims) {
     preferredMissingCount: preferredMissing.length,
     requiredCoveragePercent: coveragePercent,
   };
-
-  console.log("[GapAnalysis] Complete:", summary);
 
   return {
     matchedSkills,

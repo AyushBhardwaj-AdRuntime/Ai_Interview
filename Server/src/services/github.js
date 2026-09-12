@@ -132,6 +132,7 @@ async function inspectRepository(owner, repoName) {
     name:            repoName,
     owner,
     description:     "",
+    isForked:        false,
     primaryLanguage: null,
     languages:       {},
     topics:          [],
@@ -149,6 +150,7 @@ async function inspectRepository(owner, repoName) {
   try {
     const meta = await axios.get(base, { headers });
     result.description     = meta.data.description || "";
+    result.isForked        = meta.data.fork || false;
     result.primaryLanguage = meta.data.language;
     result.topics          = meta.data.topics || [];
     result.inspectionNotes.push(`Primary language: ${result.primaryLanguage || "unknown"}`);

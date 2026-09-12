@@ -17,6 +17,10 @@ const interviewSchema = new mongoose.Schema({
     interviewType: { type: String, default: "Technical" },
     difficulty: { type: String, default: "Medium" },
     experience: { type: String, default: "1-3 years" },
+    verificationContext: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null
+    },
     interview: {
 
         status: {

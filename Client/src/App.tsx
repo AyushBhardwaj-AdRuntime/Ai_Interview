@@ -57,6 +57,9 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => {
 };
 
 import Contact from "@/page/Contact";
+import AssessmentSetup from "@/page/AssessmentSetup";
+import AssessmentProgress from "@/page/AssessmentProgress";
+import AssessmentResult from "@/page/AssessmentResult";
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -89,6 +92,23 @@ const AnimatedRoutes = () => {
           <Route path="/result/:id" element={
             <ProtectedRoute>
               <PageTransition><Result /></PageTransition>
+            </ProtectedRoute>
+          } />
+
+          {/* Assessment Routes */}
+          <Route path="/assessment/setup" element={
+            <ProtectedRoute>
+              <PageTransition><AssessmentSetup /></PageTransition>
+            </ProtectedRoute>
+          } />
+          <Route path="/assessment/:id/progress" element={
+            <ProtectedRoute>
+              <PageTransition><AssessmentProgress /></PageTransition>
+            </ProtectedRoute>
+          } />
+          <Route path="/assessment/:id/result" element={
+            <ProtectedRoute>
+              <PageTransition><AssessmentResult /></PageTransition>
             </ProtectedRoute>
           } />
           
