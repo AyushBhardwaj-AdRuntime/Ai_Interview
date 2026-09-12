@@ -94,10 +94,12 @@ Wait for the candidate after every question.
 
   sendAudio(base64) {
     if (!this.session) return;
-    this.session.sendRealtimeInput([{
-      data: base64,
-      mimeType: "audio/pcm;rate=16000",
-    }]);
+    this.session.sendRealtimeInput({
+      media: [{
+        mimeType: "audio/pcm;rate=16000",
+        data: base64,
+      }]
+    });
   }
 
   sendText(text) {
