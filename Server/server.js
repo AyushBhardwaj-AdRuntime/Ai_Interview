@@ -10,7 +10,7 @@ const port = process.env.PORT || 8080;
 
 const server = http.createServer(app);
 
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ server, path: '/ws' });
 setupInterviewSocket(wss);
 
 async function start() {
