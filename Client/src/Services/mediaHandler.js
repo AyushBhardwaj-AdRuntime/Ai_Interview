@@ -6,13 +6,10 @@ class MediaHandler {
     this.audioContext = null;
     this.mediaStream = null;
     this.audioWorkletNode = null;
-    // this.videoStream = null;
-    // this.videoInterval = null;
     this.nextStartTime = 0;
     this.scheduledSources = [];
     this.isRecording = false;
-    // this.videoCanvas = document.createElement("canvas");
-    // this.canvasCtx = this.videoCanvas.getContext("2d");
+    this.playbackLeftover = new Uint8Array(0);
   }
 
   async initializeAudio() {
@@ -185,7 +182,24 @@ class MediaHandler {
       await this.audioContext.resume();
     }
 
-    const pcmData = new Int16Array(arrayBuffer);
+    let newBytes = new Uint8Array(arrayBuffer);
+    if (this.playbackLeftover.length > 0) {
+      const combined = new Uint8Array(this.playbackLeftover.length + newBytes.length);
+      combined.set(this.playbackLeftover, 0);
+      combined.set(newBytes, this.playbackLeftover.length);
+      newBytes = combined;
+    }
+
+    if (newBytes.length % 2 !== 0) {
+      this.playbackLeftover = newBytes.slice(newBytes.length - 1);
+      newBytes = newBytes.slice(0, newBytes.length - 1);
+    } else {
+      this.playbackLeftover = new Uint8Array(0);
+    }
+
+    if (newBytes.length === 0) return;
+
+    const pcmData = new Int16Array(newBytes.buffer, newBytes.byteOffset, newBytes.byteLength / 2);
     const float32Data = new Float32Array(pcmData.length);
     for (let i = 0; i < pcmData.length; i++) {
       float32Data[i] = pcmData[i] / 32768.0;
