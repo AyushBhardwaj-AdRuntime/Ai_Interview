@@ -24,7 +24,7 @@ const Interview = () => {
   const [error, setError] = useState<string | null>(null);
   const [sessionState, setSessionState] = useState<SessionState>('idle');
   const [elapsed, setElapsed] = useState(0);
-  
+
   const mediaRef = useRef(new MediaHandler());
   const socketRef = useRef<WebSocket | null>(null);
   const speakingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -223,7 +223,7 @@ const Interview = () => {
     mediaRef.current.stopAudio();
     mediaRef.current.stopAudioPlayback();
     if (socketRef.current) socketRef.current.close();
-    
+
     if (assessmentId) {
       try {
         await apiClient.post(`/agent/assess/${assessmentId}/interview-complete`, { interviewId: id });
@@ -299,7 +299,7 @@ const Interview = () => {
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
       <SEO title="Interview in Progress" noindex />
       {/* Immersive Central Card */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -312,7 +312,7 @@ const Interview = () => {
               {stateText[sessionState]}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
             {/* Subtle Progress Indicator */}
             {(sessionState !== 'idle' && sessionState !== 'paused' && sessionState !== 'connecting') && (
@@ -320,7 +320,7 @@ const Interview = () => {
                 Question {questionCount} of 6
               </span>
             )}
-            
+
             {/* Subtle Timer */}
             <div className="bg-background/50 backdrop-blur-md px-4 py-2 rounded-full border border-border text-sm font-mono font-medium text-foreground w-[72px] text-center">
               {formatTime(elapsed)}
@@ -329,11 +329,11 @@ const Interview = () => {
         </div>
 
         <div className="pt-32 pb-24 px-8 text-center flex flex-col items-center justify-center bg-gradient-to-b from-card to-muted/10 relative">
-          
+
           <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-10 relative">
             <AnimatePresence>
               {(sessionState === 'listening' || sessionState === 'connecting') && (
-                <motion.div 
+                <motion.div
                   initial={{ scale: 1, opacity: 0.5 }}
                   animate={{ scale: 1.5, opacity: 0 }}
                   exit={{ opacity: 0 }}
@@ -347,15 +347,15 @@ const Interview = () => {
 
           {/* Dynamic Question Text */}
           <h3 className="text-2xl sm:text-3xl font-semibold mb-12 max-w-xl text-foreground min-h-[80px]">
-            {sessionState === 'idle' 
+            {sessionState === 'idle'
               ? "Please begin when you are ready. I will adapt to your responses."
               : displayedQuestionText}
           </h3>
-          
+
           {/* Dynamic Waveform */}
           <div className="flex items-center gap-1.5 h-16">
             {Array.from({ length: bars }).map((_, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 animate={getBarAnimation(i)}
                 className={`w-2 rounded-full ${sessionState === 'speaking' ? 'bg-blue-500/80' : sessionState === 'idle' || sessionState === 'paused' ? 'bg-border' : 'bg-primary/80'}`}
@@ -368,7 +368,7 @@ const Interview = () => {
 
         {/* Controls */}
         <div className="bg-muted/30 border-t border-border p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-4 sm:mt-0">
-          <Button 
+          <Button
             onClick={toggleInterview}
             size="lg"
             variant={sessionState === 'idle' || sessionState === 'paused' ? 'default' : 'outline'}
@@ -384,7 +384,7 @@ const Interview = () => {
             )}
           </Button>
 
-          <Button 
+          <Button
             onClick={finishInterview}
             size="lg"
             variant="destructive"
