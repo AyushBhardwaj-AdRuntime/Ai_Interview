@@ -76,6 +76,8 @@ function setupInterviewSocket(wss) {
           console.error("[INTERVIEW] Failed to auto-complete assessment:", err.message);
         }
       }
+    }
+
     // Explicitly tracks which turn the incoming transcriptions belong to.
     // This decouples the AI's question state from the user's answer state.
     let activeUserTurnId = 0;
@@ -165,18 +167,20 @@ function setupInterviewSocket(wss) {
 
           // 5. Process Model Turn Parts (Text/Audio)
 
-        if (content.modelTurn?.parts) {
-          for (const part of content.modelTurn.parts) {
-            if (part.text) {
-              state.addQuestion(part.text);
-              console.log("Gemini [Text Part]:", part.text);
-            }
-            if (part.inlineData?.data) {
-              if (typeof part.inlineData.data !== "string") {
-                part.inlineData.data = Buffer.from(part.inlineData.data).toString("base64");
+          if (content.modelTurn?.parts) {
+            for (const part of content.modelTurn.parts) {
+              if (part.text) {
+                state.addQuestion(part.text);
+                console.log("Gemini [Text Part]:", part.text);
+              }
+              if (part.inlineData?.data) {
+                if (typeof part.inlineData.data !== "string") {
+                  part.inlineData.data = Buffer.from(part.inlineData.data).toString("base64");
+                }
               }
             }
           }
+          
         } catch (err) {
           console.error("Error in gemini.onMessage:", err);
         }
@@ -244,8 +248,10 @@ function setupInterviewSocket(wss) {
       }
     });
 
-    // ✅ Kick off the interview — sendText starts the first AI turn
-    gemini.sendText("Begin the interview now. Greet the candidate and ask the first question.");
+    const kickoffMsg = isVerification 
+      ? "Begin the verification interview. Greet the candidate briefly, acknowledge you have reviewed their profile, and immediately ask the first technical question about their skills."
+      : "Begin the interview now. Greet the candidate and ask the first question (Tell me about yourself).";
+    gemini.sendText(kickoffMsg);
 
   });
 
@@ -290,23 +296,23 @@ function buildSystemPrompt(interviewSummary, jobConfig, verificationContext) {
       ""
     ] : []),
     "Interview Instructions:",
-    "- Introduce yourself briefly as the MockHire AI Interviewer.",
+    "- You are the AI Interviewer. Act professionally, speak concisely, and do NOT talk too much.",
     verificationContext 
-      ? "- This is a short verification interview. Ask exactly 2 to 3 targeted technical questions based on the Verification Context above."
+      ? "- CRITICAL: This is a strict verification interview. Do NOT ask 'Tell me about yourself'. Start immediately by probing the specific claims and gaps listed in the Verification Context."
+      : "- Start with: Tell me about yourself.",
+    verificationContext
+      ? "- You MUST ask exactly 3 targeted technical questions based ONLY on the Verification Context above."
       : "- This interview contains exactly 6 questions.",
     "- Ask only ONE question at a time.",
-    "- Wait until the candidate finishes speaking before asking the next question.",
-    "- Base every question on the Candidate Summary and the Job & Interview Context provided.",
-    "- Start with: Tell me about yourself.",
-    "- Gradually increase difficulty up to the specified Difficulty Level.",
-    "- Ask follow-up questions when an answer is vague or interesting.",
-    "- Never reveal answers. Never become a general chatbot.",
-    "- If the candidate says something unrelated, politely redirect them.",
+    "- Keep your responses and questions extremely short and direct (1-3 sentences maximum). Do not ramble.",
+    "- Wait in silence until the candidate finishes speaking before you reply.",
+    "- Ask follow-up questions when an answer is vague or lacks technical depth.",
+    "- Never reveal the correct answers to technical questions. Never act as an assistant or chatbot.",
+    "- If the candidate says something unrelated, politely redirect them back to the technical interview.",
     "- Conduct the interview in English only.",
-    "- Maintain a professional but friendly tone.",
     verificationContext
       ? "- After the final verification question, thank the candidate and say the interview has ended."
       : "- After the sixth question, thank the candidate and say the interview has ended.",
-    "- Do NOT generate a score or feedback during the interview.",
+    "- Do NOT generate a score, feedback, or summary during the interview.",
   ].filter(line => line !== "").join("\n");
 }

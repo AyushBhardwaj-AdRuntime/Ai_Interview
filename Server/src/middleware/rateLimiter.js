@@ -1,5 +1,5 @@
 const rateLimit = require("express-rate-limit");
-const { getAuth } = require("@clerk/express");
+// Removed getAuth import
 
 // General API Rate Limiter: 100 requests per 15 minutes
 const generalLimiter = rateLimit({
@@ -17,9 +17,7 @@ const preInterviewLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req) => {
-        let auth;
-        try { auth = getAuth(req); } catch(e) {}
-        let userId = auth?.userId || req.auth?.userId || req.userId;
+        let userId = req.auth?.userId || req.userId;
         if (userId) userId = userId.toString();
         const ipAddr = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
         return userId || ("ip_" + String(ipAddr).split(',')[0]);
@@ -31,9 +29,7 @@ const preInterviewLimiter = rateLimit({
 const atsLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     max: (req, res) => {
-        let auth;
-        try { auth = getAuth(req); } catch(e) {}
-        let userId = auth?.userId || req.auth?.userId || req.userId;
+        let userId = req.auth?.userId || req.userId;
         if (userId) userId = userId.toString();
         if (userId && !userId.startsWith("anonymous_")) return 20;
         return 5;
@@ -41,9 +37,7 @@ const atsLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req) => {
-        let auth;
-        try { auth = getAuth(req); } catch(e) {}
-        let userId = auth?.userId || req.auth?.userId || req.userId;
+        let userId = req.auth?.userId || req.userId;
         if (userId) userId = userId.toString();
         const ipAddr = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
         return userId || ("ip_" + String(ipAddr).split(',')[0]);

@@ -1,6 +1,6 @@
 const interviewModel = require("../model/interview.model");
 const WebSocket = require("ws");
-const { getAuth } = require("@clerk/express");
+// Removed getAuth import
 
 async function getInterview(req, res) {
   try {
@@ -35,13 +35,7 @@ async function getInterview(req, res) {
 
 async function getMyInterviews(req, res) {
   try {
-    let auth;
-    try {
-        auth = getAuth(req);
-    } catch (e) {
-        console.warn("getAuth failed:", e.message);
-    }
-    const userId = auth?.userId || req.auth?.userId || req.userId;
+    const userId = req.auth?.userId || req.userId;
     if (!userId) return res.status(401).json({ success: false, code: "UNAUTHORIZED", message: "Unauthorized" });
 
     const interviews = await interviewModel
