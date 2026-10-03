@@ -138,7 +138,7 @@ const mockAssessmentModel = {
     const promptWith = buildSystemPrompt("Summary", { interviewType: "Technical" }, vc);
     assertTrue(promptWith.includes("Targeted Verification Context (CRITICAL FOR THIS INTERVIEW):"), "Includes verification header");
     assertTrue(promptWith.includes("Ask about event loop"), "Includes suggested probe");
-    assertTrue(promptWith.includes("exactly 2 to 3 targeted technical questions"), "Short interview length");
+    assertTrue(promptWith.includes("exactly 3 targeted technical questions"), "Short interview length");
 
     // Without Verification Context
     const promptWithout = buildSystemPrompt("Summary", { interviewType: "Technical" }, null);

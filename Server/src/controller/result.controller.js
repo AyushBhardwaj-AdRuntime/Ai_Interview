@@ -61,4 +61,4 @@ async function getResult(req, res) {
   }
 }
 
-module.exports = getResult;
+module.exports = getResult;
