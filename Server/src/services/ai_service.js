@@ -10,7 +10,9 @@ async function parseResume(resumeText) {
   try {
     const start = Date.now();
     const response = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "openai/gpt-oss-20b",
+      reasoning_effort: "low",
+      max_completion_tokens: 4096,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -108,7 +110,9 @@ async function analyzeATS(resumeData, jdText) {
     const resumeText = typeof resumeData === "string" ? resumeData : JSON.stringify(resumeData);
 
     const response = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "openai/gpt-oss-20b",
+      reasoning_effort: "low",
+      max_completion_tokens: 4096,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -158,7 +162,7 @@ Rules:
       .replace(/```\s*$/i, "")
       .trim();
 
-    console.log(`[LLM] model=llama-3.1-8b-instant | action=analyze_ats | duration=${Date.now() - start}ms`);
+    console.log(`[LLM] model=openai/gpt-oss-20b | action=analyze_ats | duration=${Date.now() - start}ms`);
 
     try {
       return JSON.parse(cleaned);
@@ -180,7 +184,9 @@ async function evaluateInterview(payload) {
     const payloadStr = JSON.stringify(payload, null, 2);
 
     const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-20b",
+      reasoning_effort: "low",
+      max_completion_tokens: 4096,
       response_format: { type: "json_object" },
       messages: [
         {
@@ -239,7 +245,7 @@ Rules:
       .replace(/```\s*$/i, "")
       .trim();
 
-    console.log(`[LLM] model=llama-3.3-70b-versatile | action=evaluate_interview | duration=${Date.now() - start}ms`);
+    console.log(`[LLM] model=openai/gpt-oss-20b | action=evaluate_interview | duration=${Date.now() - start}ms`);
 
     return JSON.parse(cleaned);
   } catch (error) {
@@ -254,7 +260,9 @@ async function generateReports(payload) {
         const payloadStr = JSON.stringify(payload, null, 2);
     
         const response = await groq.chat.completions.create({
-          model: "llama-3.3-70b-versatile",
+          model: "openai/gpt-oss-20b",
+          reasoning_effort: "low",
+          max_completion_tokens: 4096,
           response_format: { type: "json_object" },
           messages: [
             {
@@ -315,7 +323,7 @@ async function generateReports(payload) {
           .replace(/```\s*$/i, "")
           .trim();
     
-        console.log(`[LLM] model=llama-3.3-70b-versatile | action=generate_reports | duration=${Date.now() - start}ms`);
+        console.log(`[LLM] model=openai/gpt-oss-20b | action=generate_reports | duration=${Date.now() - start}ms`);
 
         return JSON.parse(cleaned);
       } catch (error) {

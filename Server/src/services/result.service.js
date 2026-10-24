@@ -8,9 +8,10 @@ const groq = new Groq({
 
 async function Result(result) {
   try {
-    console.log("[Result] Service request starting with llama-3.3-70b-versatile");
+    console.log("[Result] Service request starting with openai/gpt-oss-20b");
     const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "openai/gpt-oss-20b",
+      reasoning_effort: "low",
       response_format: { type: "json_object" },
       max_completion_tokens: 4096,
       temperature: 0.3,

@@ -42,7 +42,9 @@ async function parseJob(jdText) {
   console.log("[JobParser] Parsing JD — length:", jdText.length);
 
   const response = await groq.chat.completions.create({
-    model: "llama-3.1-8b-instant",
+    model: "openai/gpt-oss-20b",
+    reasoning_effort: "low",
+    max_completion_tokens: 4096,
     response_format: { type: "json_object" },
     messages: [
       {

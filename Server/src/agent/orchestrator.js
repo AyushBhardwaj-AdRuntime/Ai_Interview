@@ -62,7 +62,7 @@ const groq = new Groq({ apiKey: process.env.GROK_API_KEY || process.env.GROQ_API
 // ── Constants ──────────────────────────────────────────────────────────────────
 const DEFAULT_MAX_STEPS   = 15;   // absolute ceiling for the entire run
 const MAX_REPO_INSPECTIONS = 4;   // LLM may inspect at most this many repos
-const LLM_MODEL           = "llama-3.3-70b-versatile";
+const LLM_MODEL           = "openai/gpt-oss-20b";
 
 // ── Stage definitions ──────────────────────────────────────────────────────────
 const STAGE = {
