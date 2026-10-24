@@ -18,6 +18,7 @@
 
 "use strict";
 
+process.env.GROK_API_KEY = process.env.GROK_API_KEY || "mock_key_for_tests";
 const assert = require("assert");
 
 // ── Minimal assertion helpers ──────────────────────────────────────────────────

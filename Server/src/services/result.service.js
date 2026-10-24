@@ -3,25 +3,27 @@ require("dotenv").config();
 const Groq = require("groq-sdk");
 
 const groq = new Groq({
-  apiKey: process.env.RESULT_GROK_API_KEY || process.env.GROK_API_KEY,
+  apiKey: process.env.RESULT_GROK_API_KEY || process.env.GROK_API_KEY || process.env.GROQ_API_KEY || "dummy_key",
 });
 
 async function Result(result) {
   try {
-    console.log("Result service request starting");
+    console.log("[Result] Service request starting with llama-3.3-70b-versatile");
     const response = await groq.chat.completions.create({
-      model: "openai/gpt-oss-20b",
+      model: "llama-3.3-70b-versatile",
+      response_format: { type: "json_object" },
+      max_completion_tokens: 4096,
+      temperature: 0.3,
       messages: [
         {
           role: "system",
-          content: ` 
-You are an experienced senior software engineering interviewer coaching a candidate.
+          content: `You are an experienced senior software engineering interviewer coaching a candidate.
 
 You will receive an array of interview questions and candidate answers.
 
 Evaluate the interview fairly and provide deep, actionable feedback.
 
-Return ONLY valid JSON.
+Return ONLY a valid JSON object matching the exact schema below.
 
 Schema:
 {
@@ -54,8 +56,11 @@ Schema:
   }
 }
 
-Do not wrap the JSON in markdown. Return only the JSON object.
-   `,
+Rules:
+- For candidateAnswer in questionsAnalysis, summarize or excerpt the candidate's core response in 1-2 sentences. Do not reproduce huge transcripts verbatim.
+- Provide clear, constructive critique in strengths, weaknesses, and a concrete betterAnswer for each question.
+- All numbers must be integers between 0 and 100.
+- Do not wrap the JSON in markdown code blocks. Return only valid JSON.`,
         },
         {
           role: "user",
@@ -66,14 +71,15 @@ Do not wrap the JSON in markdown. Return only the JSON object.
 
     const content = response?.choices?.[0]?.message?.content;
     if (!content) {
-      throw new Error("GPT result evaluation returned no content");
+      throw new Error("Llama result evaluation returned no content");
     }
 
-    console.log("Result service response content:", content.slice(0, 800));
+    console.log("[Result] Service response content received, length:", content.length);
     return content;
   } catch (error) {
-    console.error("Result service error:", error);
+    console.error("[Result] Service error:", error);
     throw error;
   }
 }
- module.exports = Result
+
+module.exports = Result;

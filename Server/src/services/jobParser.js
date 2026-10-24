@@ -25,7 +25,7 @@
 require("dotenv").config();
 const Groq = require("groq-sdk");
 
-const groq = new Groq({ apiKey: process.env.GROK_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROK_API_KEY || process.env.GROQ_API_KEY || "dummy_key" });
 
 /**
  * Parse a raw job description into a structured profile.
@@ -42,7 +42,8 @@ async function parseJob(jdText) {
   console.log("[JobParser] Parsing JD — length:", jdText.length);
 
   const response = await groq.chat.completions.create({
-    model: "openai/gpt-oss-120b",
+    model: "llama-3.1-8b-instant",
+    response_format: { type: "json_object" },
     messages: [
       {
         role: "system",

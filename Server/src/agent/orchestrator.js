@@ -57,12 +57,12 @@ const {
 } = require("./state");
 
 // ── LLM client ─────────────────────────────────────────────────────────────────
-const groq = new Groq({ apiKey: process.env.GROK_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROK_API_KEY || process.env.GROQ_API_KEY || "dummy_key" });
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const DEFAULT_MAX_STEPS   = 15;   // absolute ceiling for the entire run
 const MAX_REPO_INSPECTIONS = 4;   // LLM may inspect at most this many repos
-const LLM_MODEL           = "openai/gpt-oss-120b";
+const LLM_MODEL           = "llama-3.3-70b-versatile";
 
 // ── Stage definitions ──────────────────────────────────────────────────────────
 const STAGE = {

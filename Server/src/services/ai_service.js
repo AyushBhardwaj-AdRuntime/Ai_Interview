@@ -3,14 +3,15 @@ require("dotenv").config();
 const Groq = require("groq-sdk");
 
 const groq = new Groq({
-    apiKey: process.env.GROK_API_KEY,
+    apiKey: process.env.GROK_API_KEY || process.env.GROQ_API_KEY || "dummy_key",
 });
 
 async function parseResume(resumeText) {
   try {
     const start = Date.now();
     const response = await groq.chat.completions.create({
-      model: "openai/gpt-oss-120b",
+      model: "llama-3.1-8b-instant",
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -107,7 +108,8 @@ async function analyzeATS(resumeData, jdText) {
     const resumeText = typeof resumeData === "string" ? resumeData : JSON.stringify(resumeData);
 
     const response = await groq.chat.completions.create({
-      model: "openai/gpt-oss-120b",
+      model: "llama-3.1-8b-instant",
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -156,7 +158,7 @@ Rules:
       .replace(/```\s*$/i, "")
       .trim();
 
-    console.log(`[LLM] model=openai/gpt-oss-120b | action=analyze_ats | duration=${Date.now() - start}ms`);
+    console.log(`[LLM] model=llama-3.1-8b-instant | action=analyze_ats | duration=${Date.now() - start}ms`);
 
     try {
       return JSON.parse(cleaned);
@@ -178,7 +180,8 @@ async function evaluateInterview(payload) {
     const payloadStr = JSON.stringify(payload, null, 2);
 
     const response = await groq.chat.completions.create({
-      model: "openai/gpt-oss-120b",
+      model: "llama-3.3-70b-versatile",
+      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
@@ -236,7 +239,7 @@ Rules:
       .replace(/```\s*$/i, "")
       .trim();
 
-    console.log(`[LLM] model=openai/gpt-oss-120b | action=evaluate_interview | duration=${Date.now() - start}ms`);
+    console.log(`[LLM] model=llama-3.3-70b-versatile | action=evaluate_interview | duration=${Date.now() - start}ms`);
 
     return JSON.parse(cleaned);
   } catch (error) {
@@ -251,7 +254,8 @@ async function generateReports(payload) {
         const payloadStr = JSON.stringify(payload, null, 2);
     
         const response = await groq.chat.completions.create({
-          model: "openai/gpt-oss-120b",
+          model: "llama-3.3-70b-versatile",
+          response_format: { type: "json_object" },
           messages: [
             {
               role: "system",
@@ -311,7 +315,7 @@ async function generateReports(payload) {
           .replace(/```\s*$/i, "")
           .trim();
     
-        console.log(`[LLM] model=openai/gpt-oss-120b | action=generate_reports | duration=${Date.now() - start}ms`);
+        console.log(`[LLM] model=llama-3.3-70b-versatile | action=generate_reports | duration=${Date.now() - start}ms`);
 
         return JSON.parse(cleaned);
       } catch (error) {
