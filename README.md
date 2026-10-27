@@ -1,8 +1,8 @@
-# MockHire — AI-Powered Resume Verification & Interview Platform
+# MockHire â€” AI-Powered Resume Verification & Interview Platform
 
-> **Hackdays 2.0 Submission** · Theme: Best Use of Google Gemini API · Built with Gemini Live API + Groq LLM
+>  Â· Theme: Best Use of Google Gemini API Â· Built with Gemini Live API + Groq LLM
 
-MockHire is an intelligent hiring assistant that **verifies candidate resumes against real GitHub evidence** and conducts a live AI voice interview powered by **Google Gemini Live API**. Instead of trusting keyword-stuffed resumes, MockHire autonomously investigates a candidate's actual code repositories, identifies skill gaps, then conducts a targeted, adaptive voice interview — all in real time.
+MockHire is an intelligent hiring assistant that **verifies candidate resumes against real GitHub evidence** and conducts a live AI voice interview powered by **Google Gemini Live API**. Instead of trusting keyword-stuffed resumes, MockHire autonomously investigates a candidate's actual code repositories, identifies skill gaps, then conducts a targeted, adaptive voice interview â€” all in real time.
 
 ---
 
@@ -13,7 +13,7 @@ MockHire is an intelligent hiring assistant that **verifies candidate resumes ag
 | ?? **Resume Verification Agent** | Autonomous multi-stage agent that parses resumes, discovers GitHub repos, and classifies evidence for every claimed skill |
 | ??? **Gemini Live Voice Interview** | Real-time bidirectional audio via WebSockets; Gemini Live API drives adaptive questioning based on the candidate's actual evidence |
 | ?? **Adaptive Verification Loop** | When gaps are found, a dedicated 3-question verification interview probes exactly the flagged skills |
-| ?? **ATS Score Checker** | Guest-accessible tool to check resume–JD match percentage with matched/missing keywords |
+| ?? **ATS Score Checker** | Guest-accessible tool to check resumeâ€“JD match percentage with matched/missing keywords |
 | ?? **AI Evaluation Report** | Post-interview LLM evaluation with per-question scores, a readiness score, and a structured hiring report |
 | ?? **Auth via Clerk** | Seamless sign-in/sign-up; protected routes for dashboard, setup, and interview pages |
 
@@ -23,21 +23,21 @@ MockHire is an intelligent hiring assistant that **verifies candidate resumes ag
 
 ```
 Frontend (React + Vite)
-      ¦
-      ¦  HTTP (REST)          WebSocket
+      Â¦
+      Â¦  HTTP (REST)          WebSocket
       ?                           ?
 Assessment API -------- Gemini Live WS Server
-      ¦                           ¦
+      Â¦                           Â¦
       ?                           ?
 Agent Orchestrator           InterviewState
   +- PREREQUISITES              +- saveQuestionAnswer()
-  ¦    +- Parse Resume (LLM)
-  ¦    +- Parse Job Description
-  ¦    +- Discover GitHub Repos
+  Â¦    +- Parse Resume (LLM)
+  Â¦    +- Parse Job Description
+  Â¦    +- Discover GitHub Repos
   +- INVESTIGATE (LLM-directed)
-  ¦    +- inspectRepository() × up to 4 repos
+  Â¦    +- inspectRepository() Ã— up to 4 repos
   +- PREPARE_INTERVIEW
-  ¦    +- Build verificationContext ? MongoDB
+  Â¦    +- Build verificationContext ? MongoDB
   +- AWAITING_INTERVIEW  ? Gemini Live takes over here
   +- EVALUATE_AND_REPORT
        +- Score + Generate Hiring Report
@@ -55,7 +55,7 @@ sequenceDiagram
     participant WS as Gemini Live WebSocket
     participant DB as MongoDB
 
-    Note over C, DB: Phase 1 — Pre-Interview Assessment
+    Note over C, DB: Phase 1 â€” Pre-Interview Assessment
     C->>API: POST /api/v1/agent/assess (resume + JD)
     API->>O: runAssessment()
     O->>DB: status = "running"
@@ -71,7 +71,7 @@ sequenceDiagram
     O->>DB: Save verificationContext + create Interview doc
     O-->>C: status = "awaiting_interview"
 
-    Note over C, DB: Phase 2 — Live Voice Interview
+    Note over C, DB: Phase 2 â€” Live Voice Interview
     C->>WS: ws://server?id=interviewId&assessmentId=...
     WS->>DB: Load Interview + verificationContext
     WS->>WS: buildSystemPrompt() with targeted gaps
@@ -82,7 +82,7 @@ sequenceDiagram
     end
     WS-->>C: interview_auto_complete (after 3 questions)
 
-    Note over O, DB: Phase 3 — Evaluation
+    Note over O, DB: Phase 3 â€” Evaluation
     C->>API: GET /api/v1/result/:interviewId
     API->>LLM: Evaluate Q&A transcript ? JSON score
     API->>DB: Save structured result
@@ -125,7 +125,7 @@ sequenceDiagram
 ### Prerequisites
 - Node.js v18+
 - A MongoDB Atlas connection string (or local MongoDB)
-- API keys — see [Environment Variables](#-environment-variables)
+- API keys â€” see [Environment Variables](#-environment-variables)
 
 ### 1. Clone the Repository
 ```bash
@@ -242,16 +242,16 @@ node src/agent/orchestrator.test.js
 
 ## ?? How GitHub Verification Works
 
-1. **Discover** — fetches up to 30 repos (language, topics, stars, updated_at)
-2. **Investigate** — Groq LLM decides which repos (max 4) are worth deep inspection
-3. **Inspect** — for each chosen repo, the system fetches:
+1. **Discover** â€” fetches up to 30 repos (language, topics, stars, updated_at)
+2. **Investigate** â€” Groq LLM decides which repos (max 4) are worth deep inspection
+3. **Inspect** â€” for each chosen repo, the system fetches:
    - Language breakdown (byte counts per language)
    - Root file list + notable infra files (Dockerfile, nginx.conf, etc.)
    - `package.json` / `requirements.txt` dependency lists
    - First 1,500 chars of README
-4. **Classify** — deterministic evidence scoring maps repo evidence ? candidate claims
-5. **Gap Analysis** — compares job requirements vs verified skills ? generates `verificationContext`
-6. **Targeted Interview** — Gemini Live receives specific probes for unverified claims
+4. **Classify** â€” deterministic evidence scoring maps repo evidence ? candidate claims
+5. **Gap Analysis** â€” compares job requirements vs verified skills ? generates `verificationContext`
+6. **Targeted Interview** â€” Gemini Live receives specific probes for unverified claims
 
 ---
 
@@ -263,7 +263,7 @@ The voice interview is powered by the **Gemini Live API** via a persistent WebSo
 - **System prompt** is dynamically built from:
   - Candidate's resume summary
   - Job context (title, type, difficulty, experience level)
-  - `verificationContext` — targeted claims and gaps (verification mode only)
+  - `verificationContext` â€” targeted claims and gaps (verification mode only)
 - **Turn management:** Async message queue serialises AI events; late transcription chunks are correctly attributed to past Q&A pairs
 - **Auto-complete:** After 3 verification questions, server sends `interview_auto_complete` and triggers orchestrator evaluation
 
@@ -282,20 +282,20 @@ The voice interview is powered by the **Gemini Live API** via a persistent WebSo
 ```
 Ai_Interview/
 +-- Client/                  # React + Vite frontend
-¦   +-- src/
-¦       +-- api/             # Axios client wrappers
-¦       +-- components/      # Reusable UI components
-¦       +-- context/         # Theme context
-¦       +-- hooks/           # React Query hooks
-¦       +-- page/            # Route-level page components
-¦       +-- Services/        # MediaHandler (audio streaming)
-¦       +-- types/           # TypeScript types
-¦
+Â¦   +-- src/
+Â¦       +-- api/             # Axios client wrappers
+Â¦       +-- components/      # Reusable UI components
+Â¦       +-- context/         # Theme context
+Â¦       +-- hooks/           # React Query hooks
+Â¦       +-- page/            # Route-level page components
+Â¦       +-- Services/        # MediaHandler (audio streaming)
+Â¦       +-- types/           # TypeScript types
+Â¦
 +-- Server/                  # Node.js + Express backend
     +-- src/
         +-- agent/           # Orchestrator + state machine
-        ¦   +-- orchestrator.js   # Core assessment lifecycle
-        ¦   +-- state.js          # Immutable state + checkpointing
+        Â¦   +-- orchestrator.js   # Core assessment lifecycle
+        Â¦   +-- state.js          # Immutable state + checkpointing
         +-- controller/      # Route handlers
         +-- middleware/      # Auth, rate limiting, anonymous sessions
         +-- model/           # Mongoose schemas
@@ -308,4 +308,4 @@ Ai_Interview/
 
 ## ?? License
 
-MIT — feel free to use, modify, and distribute.
+MIT â€” feel free to use, modify, and distribute.
